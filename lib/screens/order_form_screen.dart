@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../app_theme.dart';
 
 class OrderFormScreen extends StatefulWidget {
   const OrderFormScreen({super.key});
@@ -21,7 +22,6 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
 
   Future<void> submit() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => isLoading = true);
 
     final result = await ApiService.kirimPesanan({
@@ -36,76 +36,82 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
 
     if (result != null) {
       final resi = result['resi'];
-
       if (!mounted) return;
-
       showDialog(
         context: context,
-        builder: (_) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            title: const Text("Pesanan Berhasil"),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.check_circle_outline,
-                  color: Colors.green,
-                  size: 48,
+        builder: (_) => AlertDialog(
+          title: const Text('Pesanan Berhasil'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: AppColors.successSurface,
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(height: 12),
-                const Text(
-                  "Pesanan berhasil dibuat",
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                child: const Icon(Icons.check_rounded,
+                    color: AppColors.success, size: 30),
+              ),
+              const SizedBox(height: 14),
+              Text('Pesanan berhasil dibuat',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                      color: Theme.of(context).colorScheme.onSurface)),
+              const SizedBox(height: 14),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.primarySurface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                      color: AppColors.primary.withOpacity(0.2)),
                 ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    children: [
-                      const Text(
-                        "Nomor Resi",
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                child: Column(
+                  children: [
+                    const Text('Nomor Resi',
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 4),
+                    Text(
+                      resi ?? '-',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primaryDark,
+                        letterSpacing: 0.5,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        resi ?? "-",
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 10),
-                const Text(
-                  "Gunakan nomor resi ini untuk melacak pengiriman",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: const Text("Tutup"),
-              )
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Gunakan nomor resi ini untuk melacak pengiriman',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+              ),
             ],
-          );
-        },
+          ),
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Tutup'),
+              ),
+            ),
+          ],
+        ),
       );
-
       _formKey.currentState!.reset();
     } else {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Gagal mengirim pesanan')),
       );
@@ -115,115 +121,102 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F2),
-      appBar: AppBar(
-        title: const Text('Buat Pesanan'),
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1F2937),
-      ),
+      appBar: AppBar(title: const Text('Buat Pesanan')),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
           children: [
-            _sectionTitle('Informasi Pabrik'),
-            _input(
-              controller: namaPabrikController,
-              label: 'Nama Pabrik',
+            _SectionCard(
+              title: 'Informasi Pabrik',
+              icon: Icons.factory_outlined,
+              children: [
+                _input(
+                  controller: namaPabrikController,
+                  label: 'Nama Pabrik',
+                  icon: Icons.business_outlined,
+                ),
+              ],
             ),
-
-            const SizedBox(height: 20),
-
-            _sectionTitle('Alamat Pengiriman'),
-            _input(
-              controller: alamatAsalController,
-              label: 'Alamat Asal',
-              maxLines: 2,
+            const SizedBox(height: 14),
+            _SectionCard(
+              title: 'Alamat Pengiriman',
+              icon: Icons.place_outlined,
+              children: [
+                _input(
+                  controller: alamatAsalController,
+                  label: 'Alamat Asal',
+                  icon: Icons.my_location_rounded,
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 10),
+                _input(
+                  controller: alamatTujuanController,
+                  label: 'Alamat Tujuan',
+                  icon: Icons.location_on_outlined,
+                  maxLines: 2,
+                ),
+              ],
             ),
-            _input(
-              controller: alamatTujuanController,
-              label: 'Alamat Tujuan',
-              maxLines: 2,
-            ),
-
-            const SizedBox(height: 20),
-
-            _sectionTitle('Detail Barang'),
-            _input(
-              controller: jenisBarangController,
-              label: 'Jenis Barang',
-            ),
-            _input(
-              controller: beratController,
-              label: 'Berat (kg)',
-              keyboardType: TextInputType.number,
-              validator: (v) {
-                if (v == null || v.isEmpty) {
-                  return 'Berat wajib diisi';
-                }
-                if (int.tryParse(v) == null) {
-                  return 'Berat harus berupa angka';
-                }
-                if (int.parse(v) <= 0) {
-                  return 'Berat tidak valid';
-                }
-                return null;
-              },
+            const SizedBox(height: 14),
+            _SectionCard(
+              title: 'Detail Barang',
+              icon: Icons.inventory_2_outlined,
+              children: [
+                _input(
+                  controller: jenisBarangController,
+                  label: 'Jenis Barang',
+                  icon: Icons.category_outlined,
+                ),
+                const SizedBox(height: 10),
+                _input(
+                  controller: beratController,
+                  label: 'Berat (kg)',
+                  icon: Icons.scale_outlined,
+                  keyboardType: TextInputType.number,
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'Berat wajib diisi';
+                    if (int.tryParse(v) == null) return 'Masukkan angka';
+                    if (int.parse(v) <= 0) return 'Berat tidak valid';
+                    return null;
+                  },
+                ),
+              ],
             ),
           ],
         ),
       ),
-      bottomSheet: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(
-            top: BorderSide(color: Color(0xFFE5E7EB)),
-          ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        decoration: BoxDecoration(
+          color: context.surfaceColor,
+          border:
+              Border(top: BorderSide(color: context.borderColor, width: 0.5)),
         ),
         child: SizedBox(
           width: double.infinity,
-          height: 48,
+          height: 52,
           child: ElevatedButton(
             onPressed: isLoading ? null : submit,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF1F2937),
-              elevation: 0,
+              backgroundColor: AppColors.primary,
+              disabledBackgroundColor: AppColors.primary.withOpacity(0.4),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: const BorderSide(color: Color(0xFFE5E7EB)),
-              ),
+                  borderRadius: BorderRadius.circular(14)),
+              elevation: 4,
+              shadowColor: AppColors.primary.withOpacity(0.4),
             ),
             child: isLoading
                 ? const SizedBox(
-                    width: 20,
-                    height: 20,
+                    width: 22,
+                    height: 22,
                     child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Color(0xFF1F2937),
-                    ),
+                        color: Colors.white, strokeWidth: 2.5),
                   )
-                : const Text(
-                    'Kirim Pesanan',
-                    style: TextStyle(fontSize: 16),
-                  ),
+                : const Text('Kirim Pesanan',
+                    style: TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w700)),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _sectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: Color(0xFF6B7280),
         ),
       ),
     );
@@ -232,35 +225,70 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
   Widget _input({
     required TextEditingController controller,
     required String label,
+    required IconData icon,
     int maxLines = 1,
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
   }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: TextFormField(
-        controller: controller,
-        maxLines: maxLines,
-        keyboardType: keyboardType,
-        validator: validator ??
-            (v) => v == null || v.isEmpty ? '$label wajib diisi' : null,
-        decoration: InputDecoration(
-          labelText: label,
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      validator: validator ??
+          (v) => v == null || v.isEmpty ? '$label wajib diisi' : null,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon),
+      ),
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final List<Widget> children;
+
+  const _SectionCard({
+    required this.title,
+    required this.icon,
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: context.surfaceColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+            child: Row(
+              children: [
+                Icon(icon, size: 16, color: AppColors.primary),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
+            ),
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(children: children),
           ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF1F2937)),
-          ),
-        ),
+        ],
       ),
     );
   }

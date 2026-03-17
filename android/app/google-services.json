@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "441793358853",
+    "firebase_url": "https://lacar-ekspedisi-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "lacar-ekspedisi",
+    "storage_bucket": "lacar-ekspedisi.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:441793358853:android:57d5b0264f57d6ff6dc06c",
+        "android_client_info": {
+          "package_name": "com.example.driver_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB7d6z6TGykKlQKobLAioAPt5OqUl3Sb20"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:441793358853:android:924c34007d08419b6dc06c",
+        "android_client_info": {
+          "package_name": "com.example.ekspedisi_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB7d6z6TGykKlQKobLAioAPt5OqUl3Sb20"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -50,6 +50,25 @@ class ApiService {
     }
   }
 
+  // POST selesaikan pesanan (pelanggan)
+  static Future<bool> selesaikanPesanan(int orderId) async {
+    final token = await AuthService.getToken();
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/pesanan/$orderId/selesaikan'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('ERROR SELESAIKAN: $e');
+      return false;
+    }
+  }
+
   // GET dashboard statistik
   static Future<Map<String, dynamic>> getDashboard() async {
     final response = await http.get(

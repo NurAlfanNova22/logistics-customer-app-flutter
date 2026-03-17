@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../app_theme.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(int)? onChangeTab;
-
   const DashboardScreen({super.key, this.onChangeTab});
 
   @override
@@ -22,7 +22,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     futureDashboard = ApiService.getDashboard();
     _fadeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 600),
     );
     _fadeAnimation = CurvedAnimation(
       parent: _fadeController,
@@ -40,7 +40,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
       body: SafeArea(
         child: FadeTransition(
           opacity: _fadeAnimation,
@@ -49,160 +48,175 @@ class _DashboardScreenState extends State<DashboardScreen>
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Color(0xFF1F2937),
-                  ),
+                  child: CircularProgressIndicator(color: AppColors.primary),
                 );
               }
-
               if (snapshot.hasError || !snapshot.hasData) {
-                return const Center(
+                return Center(
                   child: Text(
                     'Gagal memuat dashboard',
-                    style: TextStyle(color: Color(0xFF9CA3AF)),
+                    style: TextStyle(color: context.textMutedColor),
                   ),
                 );
               }
-
               final data = snapshot.data!;
-
-              return CustomScrollView(
-                physics: const BouncingScrollPhysics(),
-                slivers: [
-                  // Header
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Selamat datang 👋',
-                                    style: TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.w700,
-                                      color: const Color(0xFF111827),
-                                      letterSpacing: -0.5,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  const Text(
-                                    'Pantau dan kelola pengiriman Anda',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: Color(0xFF9CA3AF),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                      color: const Color(0xFFE5E7EB)),
-                                ),
-                                child: const Icon(
-                                  Icons.notifications_none_rounded,
-                                  size: 20,
-                                  color: Color(0xFF374151),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 28),
-
-                          // Stats Grid
-                          Row(
-                            children: [
-                              _StatCard(
-                                title: 'Total',
-                                value: data['total'] ?? 0,
-                                icon: Icons.list_alt_rounded,
-                                color: const Color(0xFF111827),
-                              ),
-                              const SizedBox(width: 10),
-                              _StatCard(
-                                title: 'Dikirim',
-                                value: data['dikirim'] ?? 0,
-                                icon: Icons.local_shipping_outlined,
-                                color: const Color(0xFF2563EB),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              _StatCard(
-                                title: 'Selesai',
-                                value: data['selesai'] ?? 0,
-                                icon: Icons.check_circle_outline_rounded,
-                                color: const Color(0xFF16A34A),
-                              ),
-                              const SizedBox(width: 10),
-                              _StatCard(
-                                title: 'Diproses',
-                                value: data['diproses'] ?? 0,
-                                icon: Icons.schedule_rounded,
-                                color: const Color(0xFFD97706),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 32),
-
-                          // Section label
-                          const Text(
-                            'AKSI CEPAT',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 1.4,
-                              color: Color(0xFF9CA3AF),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Action Buttons
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate([
-                        _ActionTile(
-                          icon: Icons.add_box_outlined,
-                          label: 'Buat Pesanan Baru',
-                          subtitle: 'Tambah pesanan pengiriman',
-                          onTap: () => widget.onChangeTab?.call(2),
-                        ),
-                        const SizedBox(height: 10),
-                        _ActionTile(
-                          icon: Icons.location_on_outlined,
-                          label: 'Lacak Pesanan',
-                          subtitle: 'Lihat status pengiriman',
-                          onTap: () => widget.onChangeTab?.call(3),
-                        ),
-                        const SizedBox(height: 24),
-                      ]),
-                    ),
-                  ),
-                ],
-              );
+              return _buildContent(context, data);
             },
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildContent(BuildContext context, Map<String, dynamic> data) {
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Selamat datang 👋',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: context.textPrimaryColor,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Pantau dan kelola pengiriman Anda',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: context.textMutedColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    _NotifButton(),
+                  ],
+                ),
+
+                const SizedBox(height: 28),
+
+                // Stats Grid
+                Row(
+                  children: [
+                    _StatCard(
+                      title: 'Total',
+                      value: data['total'] ?? 0,
+                      icon: Icons.list_alt_rounded,
+                      color: context.textPrimaryColor,
+                    ),
+                    const SizedBox(width: 10),
+                    _StatCard(
+                      title: 'Dikirim',
+                      value: data['dikirim'] ?? 0,
+                      icon: Icons.local_shipping_rounded,
+                      color: AppColors.info,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    _StatCard(
+                      title: 'Selesai',
+                      value: data['selesai'] ?? 0,
+                      icon: Icons.check_circle_outline_rounded,
+                      color: AppColors.success,
+                    ),
+                    const SizedBox(width: 10),
+                    _StatCard(
+                      title: 'Diproses',
+                      value: data['diproses'] ?? 0,
+                      icon: Icons.schedule_rounded,
+                      color: AppColors.primary,
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 32),
+
+                Text(
+                  'AKSI CEPAT',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.4,
+                    color: context.textMutedColor,
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        ),
+
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          sliver: SliverList(
+            delegate: SliverChildListDelegate([
+              _ActionTile(
+                icon: Icons.add_box_outlined,
+                label: 'Buat Pesanan Baru',
+                subtitle: 'Tambah pesanan pengiriman',
+                iconColor: AppColors.primary,
+                onTap: () => widget.onChangeTab?.call(2),
+              ),
+              const SizedBox(height: 10),
+              _ActionTile(
+                icon: Icons.location_on_outlined,
+                label: 'Lacak Pesanan',
+                subtitle: 'Lihat status pengiriman',
+                iconColor: AppColors.info,
+                onTap: () => widget.onChangeTab?.call(3),
+              ),
+              const SizedBox(height: 10),
+              _ActionTile(
+                icon: Icons.list_alt_outlined,
+                label: 'Daftar Pesanan',
+                subtitle: 'Lihat semua pesanan Anda',
+                iconColor: AppColors.success,
+                onTap: () => widget.onChangeTab?.call(1),
+              ),
+              const SizedBox(height: 24),
+            ]),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Notif Button ─────────────────────────────────────────────────────────────
+
+class _NotifButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: context.surfaceColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: context.borderColor),
+      ),
+      child: Icon(
+        Icons.notifications_none_rounded,
+        size: 20,
+        color: context.textSecondaryColor,
       ),
     );
   }
@@ -229,9 +243,9 @@ class _StatCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.surfaceColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFF0F0F0)),
+          border: Border.all(color: context.borderColor),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -240,7 +254,7 @@ class _StatCard extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.08),
+                color: color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, size: 18, color: color),
@@ -251,17 +265,14 @@ class _StatCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF111827),
+                color: context.textPrimaryColor,
                 letterSpacing: -0.5,
               ),
             ),
             const SizedBox(height: 2),
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFF9CA3AF),
-              ),
+              style: TextStyle(fontSize: 12, color: context.textMutedColor),
             ),
           ],
         ),
@@ -276,12 +287,14 @@ class _ActionTile extends StatefulWidget {
   final IconData icon;
   final String label;
   final String subtitle;
+  final Color iconColor;
   final VoidCallback onTap;
 
   const _ActionTile({
     required this.icon,
     required this.label,
     required this.subtitle,
+    required this.iconColor,
     required this.onTap,
   });
 
@@ -308,9 +321,9 @@ class _ActionTileState extends State<_ActionTile> {
           duration: const Duration(milliseconds: 100),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: _pressed ? const Color(0xFFF3F4F6) : Colors.white,
+            color: _pressed ? context.surface2Color : context.surfaceColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFF0F0F0)),
+            border: Border.all(color: context.borderColor),
           ),
           child: Row(
             children: [
@@ -318,14 +331,10 @@ class _ActionTileState extends State<_ActionTile> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF3F4F6),
+                  color: widget.iconColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  widget.icon,
-                  size: 20,
-                  color: const Color(0xFF374151),
-                ),
+                child: Icon(widget.icon, size: 20, color: widget.iconColor),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -334,27 +343,25 @@ class _ActionTileState extends State<_ActionTile> {
                   children: [
                     Text(
                       widget.label,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF111827),
+                        color: context.textPrimaryColor,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       widget.subtitle,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF9CA3AF),
-                      ),
+                      style: TextStyle(
+                          fontSize: 12, color: context.textMutedColor),
                     ),
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
                 size: 18,
-                color: Color(0xFFD1D5DB),
+                color: context.textMutedColor,
               ),
             ],
           ),

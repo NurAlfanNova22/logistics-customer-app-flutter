@@ -1,150 +1,348 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
+import '../app_theme.dart';
+import 'tracking_screen.dart';
 
-class OrderDetailScreen extends StatelessWidget {
+class OrderDetailScreen extends StatefulWidget {
   final Map<String, dynamic> pesanan;
-
   const OrderDetailScreen({super.key, required this.pesanan});
 
   @override
+  State<OrderDetailScreen> createState() => _OrderDetailScreenState();
+}
+
+class _OrderDetailScreenState extends State<OrderDetailScreen> {
+  bool isLoading = false;
+  late Map<String, dynamic> _currentPesanan;
+  Map<String, dynamic>? _trackingData;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentPesanan = Map<String, dynamic>.from(widget.pesanan);
+    _fetchTrackingProgress();
+  }
+
+  Future<void> _fetchTrackingProgress() async {
+    final data = await ApiService.trackingResi(_currentPesanan['resi']);
+    if (mounted && data != null) {
+      setState(() {
+        _trackingData = data;
+      });
+    }
+  }
+
+  Future<void> _selesaikanPesanan() async {
+    setState(() => isLoading = true);
+    try {
+      final success =
+          await ApiService.selesaikanPesanan(_currentPesanan['id']);
+      if (!mounted) return;
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Pesanan berhasil diselesaikan')));
+        Navigator.pop(context, true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Gagal menyelesaikan pesanan')));
+        setState(() => isLoading = false);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      setState(() => isLoading = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final status = (pesanan['status'] ?? '').toString().toLowerCase();
+    final status = (_currentPesanan['status'] ?? '').toString().toLowerCase();
+    final statusPengiriman = (_currentPesanan['status_pengiriman'] ?? status).toString().toLowerCase();
+    
+    // Mapping status label Bahasa Indonesia
+    String displayStatus = statusPengiriman;
+    if (status == 'menunggu konfirmasi') displayStatus = 'menunggu konfirmasi';
+    if (statusPengiriman == 'menunggu pickup') displayStatus = 'sopir mengambil barang';
+    
+    final canBeCompleted = status != 'selesai' && statusPengiriman == 'pesanan telah dikirim';
+    final isTrackingAvailable = statusPengiriman == 'dalam perjalanan';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F2),
       appBar: AppBar(
         title: const Text('Detail Pesanan'),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1F2937),
-        elevation: 0,
+        actions: [
+          if (isTrackingAvailable)
+            TextButton.icon(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TrackingScreen(resi: _currentPesanan['resi']),
+                ),
+              ),
+              icon: const Icon(Icons.location_on_rounded, size: 18),
+              label: const Text('Lacak'),
+              style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+            ),
+        ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
-          _sectionCard(
-            title: "Informasi Pabrik",
+          _SectionCard(
+            title: 'Informasi Pabrik',
+            icon: Icons.factory_outlined,
             children: [
-              _infoRow("Resi", pesanan['resi']),
-              _infoRow("Nama Pabrik", pesanan['nama_pabrik']),
-              _infoRow("Alamat Asal", pesanan['alamat_asal']),
-              _infoRow("Alamat Tujuan", pesanan['alamat_tujuan']),
+              _infoRow('Resi', _currentPesanan['resi'], context, highlight: true),
+              _infoRow('Nama Pabrik', _currentPesanan['nama_pabrik'], context),
+              _infoRow('Alamat Asal', _currentPesanan['alamat_asal'], context),
+              _infoRow('Alamat Tujuan', _currentPesanan['alamat_tujuan'], context),
+              _infoRow('Status', displayStatus.toUpperCase(), context, highlight: true),
             ],
           ),
-
-          const SizedBox(height: 16),
-
-          _sectionCard(
-            title: "Detail Barang",
+          const SizedBox(height: 12),
+          _SectionCard(
+            title: 'Detail Barang',
+            icon: Icons.inventory_2_outlined,
             children: [
-              _infoRow("Jenis Barang", pesanan['jenis_barang']),
-              _infoRow("Berat", "${pesanan['berat']} kg"),
+              _infoRow('Jenis Barang', _currentPesanan['jenis_barang'], context),
+              _infoRow('Berat', '${_currentPesanan['berat']} kg', context),
             ],
           ),
-
-          const SizedBox(height: 16),
-
-          _sectionCard(
-            title: "Status Pengiriman",
+          const SizedBox(height: 12),
+          _SectionCard(
+            title: 'Riwayat Pengiriman',
+            icon: Icons.history_rounded,
             children: [
-              _statusTimeline(status),
+              if (_trackingData != null)
+                _StatusTimeline(progress: _trackingData!['progress'] as List)
+              else
+                const Center(child: Padding(
+                  padding: EdgeInsets.all(20.0),
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )),
             ],
           ),
+          const SizedBox(height: 20),
+          if (canBeCompleted)
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton.icon(
+                onPressed: isLoading ? null : _selesaikanPesanan,
+                icon: isLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
+                    : const Icon(Icons.check_circle_rounded),
+                label: const Text('Pesanan Telah Diterima',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  elevation: 4,
+                  shadowColor: AppColors.primary.withOpacity(0.4),
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _sectionCard({required String title, required List<Widget> children}) {
+  Widget _infoRow(String label, dynamic value, BuildContext context,
+      {bool highlight = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(
+              label,
+              style: TextStyle(
+                  fontSize: 13, color: context.textSecondaryColor),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value?.toString() ?? '-',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight:
+                    highlight ? FontWeight.w700 : FontWeight.w500,
+                color: highlight
+                    ? AppColors.primary
+                    : context.textPrimaryColor,
+                letterSpacing: highlight ? 0.5 : 0,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final List<Widget> children;
+
+  const _SectionCard({
+    required this.title,
+    required this.icon,
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.surfaceColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: context.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: Color(0xFF1F2937),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+            child: Row(
+              children: [
+                Icon(icon, size: 16, color: AppColors.primary),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 12),
-          ...children,
-        ],
-      ),
-    );
-  }
-
-  Widget _infoRow(String label, dynamic value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 3,
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: Color(0xFF6B7280),
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 5,
-            child: Text(
-              value?.toString() ?? '-',
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF1F2937),
-              ),
-            ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: children),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _statusTimeline(String status) {
-    int currentStep = 0;
+class _StatusTimeline extends StatelessWidget {
+  final List<dynamic> progress;
+  const _StatusTimeline({required this.progress});
 
-    if (status == 'menunggu pickup') {
-      currentStep = 0;
-    } else if (status == 'dalam perjalanan') {
-      currentStep = 1;
-    } else if (status == 'selesai') {
-      currentStep = 2;
-    }
-
+  @override
+  Widget build(BuildContext context) {
     return Column(
-      children: [
-        _timelineItem("Driver mengambil barang", currentStep >= 0),
-        _timelineItem("Dalam perjalanan", currentStep >= 1),
-        _timelineItem("Barang sampai", currentStep >= 2),
-      ],
-    );
-  }
+      children: progress.asMap().entries.map((e) {
+        final i = e.key;
+        final step = e.value as Map<String, dynamic>;
+        
+        final label = step['step'] ?? '-';
+        final lokasi = step['lokasi'] ?? '-';
+        final waktu = step['waktu'] ?? '-';
+        final status = (step['status'] ?? '').toString().toLowerCase();
+        
+        final isActive = status == 'selesai' || status == 'proses';
+        final isCurrent = i == 0; // Newest is at index 0 because of array_reverse in PHP
+        final isLast = i == progress.length - 1;
 
-  Widget _timelineItem(String title, bool isActive) {
-    return Row(
-      children: [
-        Icon(
-          isActive ? Icons.check_circle : Icons.radio_button_unchecked,
-          color: isActive ? Colors.green : Colors.grey,
-        ),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: TextStyle(
-            fontWeight: FontWeight.w500,
-            color: isActive ? Colors.green : Colors.grey,
-          ),
-        ),
-      ],
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Column(
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: isActive
+                        ? AppColors.primary.withOpacity(0.1)
+                        : context.surface2Color,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isActive ? AppColors.primary : context.borderColor,
+                      width: isCurrent ? 2 : 1,
+                    ),
+                  ),
+                  child: Icon(
+                    isActive
+                        ? (status == 'selesai' ? Icons.check_rounded : Icons.local_shipping_rounded)
+                        : Icons.radio_button_unchecked_rounded,
+                    size: 14,
+                    color: isActive ? AppColors.primary : context.textMutedColor,
+                  ),
+                ),
+                if (!isLast)
+                  Container(
+                    width: 1.5,
+                    height: 40,
+                    color: isActive ? AppColors.primary.withOpacity(0.3) : context.borderColor,
+                  ),
+              ],
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            label,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                              color: isActive ? context.textPrimaryColor : context.textMutedColor,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          waktu,
+                          style: TextStyle(fontSize: 11, color: context.textMutedColor),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      lokasi,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isActive ? context.textSecondaryColor : context.textMutedColor,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                    if (status == 'proses')
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          'Sedang berlangsung',
+                          style: TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    SizedBox(height: isLast ? 0 : 24),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      }).toList(),
     );
   }
 }
