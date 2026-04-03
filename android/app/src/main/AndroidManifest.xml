@@ -8,7 +8,8 @@
         android:usesCleartextTraffic="true">
         
         <meta-data android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyDsI0V9KXeonjDo2qtQ4qJy6SB_NKwKNTo"/>
+            android:value="${MAPS_API_KEY}"/>
+
         <uses-library android:name="org.apache.http.legacy" android:required="false" />
 
         <activity
