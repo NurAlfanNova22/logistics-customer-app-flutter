@@ -23,10 +23,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadProfile() async {
     final data = await AuthService.getProfile();
-    if (mounted) setState(() {
+    if (mounted) {
+      setState(() {
       user = data;
       isLoading = false;
     });
+    }
   }
 
   Future<void> _logout() async {

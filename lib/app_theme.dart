@@ -83,8 +83,6 @@ class AppTheme {
         outlineVariant: border,
         surfaceContainerHighest: surface2,
         onSurfaceVariant: textSecondary,
-        background: bg,
-        onBackground: textPrimary,
       ),
       scaffoldBackgroundColor: bg,
 

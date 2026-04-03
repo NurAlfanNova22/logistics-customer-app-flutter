@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../services/auth_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.0.2.2:8000/api';
+  static const String baseUrl = 'http://192.168.0.112:8000/api';
 
   // POST pesanan
   static Future<Map<String, dynamic>?> kirimPesanan(Map<String, dynamic> data) async {

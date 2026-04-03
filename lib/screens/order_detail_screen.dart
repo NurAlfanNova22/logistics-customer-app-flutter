@@ -28,6 +28,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     if (mounted && data != null) {
       setState(() {
         _trackingData = data;
+        // Update shipping status from tracking data if available
+        if (data.containsKey('status_pengiriman')) {
+          _currentPesanan['status_pengiriman'] = data['status_pengiriman'];
+        }
       });
     }
   }
@@ -85,68 +89,72 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        children: [
-          _SectionCard(
-            title: 'Informasi Pabrik',
-            icon: Icons.factory_outlined,
-            children: [
-              _infoRow('Resi', _currentPesanan['resi'], context, highlight: true),
-              _infoRow('Nama Pabrik', _currentPesanan['nama_pabrik'], context),
-              _infoRow('Alamat Asal', _currentPesanan['alamat_asal'], context),
-              _infoRow('Alamat Tujuan', _currentPesanan['alamat_tujuan'], context),
-              _infoRow('Status', displayStatus.toUpperCase(), context, highlight: true),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _SectionCard(
-            title: 'Detail Barang',
-            icon: Icons.inventory_2_outlined,
-            children: [
-              _infoRow('Jenis Barang', _currentPesanan['jenis_barang'], context),
-              _infoRow('Berat', '${_currentPesanan['berat']} kg', context),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _SectionCard(
-            title: 'Riwayat Pengiriman',
-            icon: Icons.history_rounded,
-            children: [
-              if (_trackingData != null)
-                _StatusTimeline(progress: _trackingData!['progress'] as List)
-              else
-                const Center(child: Padding(
-                  padding: EdgeInsets.all(20.0),
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )),
-            ],
-          ),
-          const SizedBox(height: 20),
-          if (canBeCompleted)
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton.icon(
-                onPressed: isLoading ? null : _selesaikanPesanan,
-                icon: isLoading
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
-                    : const Icon(Icons.check_circle_rounded),
-                label: const Text('Pesanan Telah Diterima',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  elevation: 4,
-                  shadowColor: AppColors.primary.withOpacity(0.4),
+      body: RefreshIndicator(
+        onRefresh: _fetchTrackingProgress,
+        color: AppColors.primary,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          children: [
+            _SectionCard(
+              title: 'Informasi Pabrik',
+              icon: Icons.factory_outlined,
+              children: [
+                _infoRow('Resi', _currentPesanan['resi'], context, highlight: true),
+                _infoRow('Nama Pabrik', _currentPesanan['nama_pabrik'], context),
+                _infoRow('Alamat Asal', _currentPesanan['alamat_asal'], context),
+                _infoRow('Alamat Tujuan', _currentPesanan['alamat_tujuan'], context),
+                _infoRow('Status', displayStatus.toUpperCase(), context, highlight: true),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _SectionCard(
+              title: 'Detail Barang',
+              icon: Icons.inventory_2_outlined,
+              children: [
+                _infoRow('Jenis Barang', _currentPesanan['jenis_barang'], context),
+                _infoRow('Berat', '${_currentPesanan['berat']} kg', context),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _SectionCard(
+              title: 'Riwayat Pengiriman',
+              icon: Icons.history_rounded,
+              children: [
+                if (_trackingData != null)
+                  _StatusTimeline(progress: _trackingData!['progress'] as List)
+                else
+                  const Center(child: Padding(
+                    padding: EdgeInsets.all(20.0),
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )),
+              ],
+            ),
+            const SizedBox(height: 20),
+            if (canBeCompleted)
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: isLoading ? null : _selesaikanPesanan,
+                  icon: isLoading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Icon(Icons.check_circle_rounded),
+                  label: const Text('Pesanan Telah Diterima',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    elevation: 4,
+                    shadowColor: AppColors.primary.withOpacity(0.4),
+                  ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
