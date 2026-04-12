@@ -3,7 +3,8 @@ import '../services/api_service.dart';
 import '../app_theme.dart';
 
 class OrderFormScreen extends StatefulWidget {
-  const OrderFormScreen({super.key});
+  final Function(int)? onOrderSuccess;
+  const OrderFormScreen({super.key, this.onOrderSuccess});
 
   @override
   State<OrderFormScreen> createState() => _OrderFormScreenState();
@@ -102,7 +103,10 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
             SizedBox(
               width: double.infinity,
               child: TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  Navigator.pop(context);
+                  widget.onOrderSuccess?.call(0); // Navigate back to Dashboard (Index 0)
+                },
                 child: const Text('Tutup'),
               ),
             ),

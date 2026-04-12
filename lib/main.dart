@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
+import 'screens/main_screen.dart';
+import 'services/auth_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
@@ -29,7 +31,23 @@ class MyApp extends StatelessWidget {
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: themeMode,
-          home: LoginScreen(),
+          home: FutureBuilder<String?>(
+            future: AuthService.getToken(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Scaffold(
+                  backgroundColor: AppColors.primary,
+                  body: Center(
+                    child: CircularProgressIndicator(color: Colors.white),
+                  ),
+                );
+              }
+              if (snapshot.hasData && snapshot.data != null) {
+                return const MainScreen();
+              }
+              return const LoginScreen();
+            },
+          ),
         );
       },
     );

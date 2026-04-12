@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dashboard_screen.dart';
 import 'order_form_screen.dart';
 import 'tracking_screen.dart';
@@ -25,7 +26,9 @@ class _MainScreenState extends State<MainScreen> {
         onChangeTab: (index) => setState(() => _currentIndex = index),
       ),
       const OrderListScreen(),
-      OrderFormScreen(),
+      OrderFormScreen(
+        onOrderSuccess: (index) => setState(() => _currentIndex = index),
+      ),
       const TrackingScreen(),
       const ProfileScreen(),
     ];
@@ -58,8 +61,8 @@ class _MainScreenState extends State<MainScreen> {
           return;
         }
         
-        // This will exit the app
-        Navigator.of(context).pop();
+        // This will exit the app natively
+        SystemNavigator.pop();
       },
       child: Scaffold(
         body: _pages[_currentIndex],

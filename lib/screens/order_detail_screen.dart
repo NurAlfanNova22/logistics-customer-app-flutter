@@ -58,6 +58,27 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
+  Future<void> _batalkanPesanan() async {
+    setState(() => isLoading = true);
+    try {
+      final success = await ApiService.batalkanPesanan(_currentPesanan['id']);
+      if (!mounted) return;
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Pesanan berhasil dibatalkan')));
+        Navigator.pop(context, true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Pesanan tidak dapat dibatalkan')));
+        setState(() => isLoading = false);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      setState(() => isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final status = (_currentPesanan['status'] ?? '').toString().toLowerCase();
@@ -70,6 +91,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     
     final canBeCompleted = status != 'selesai' && statusPengiriman == 'pesanan telah dikirim';
     final isTrackingAvailable = statusPengiriman == 'dalam perjalanan';
+    final canBeCancelled = status != 'dibatalkan' && status != 'selesai' && statusPengiriman != 'dalam perjalanan' && statusPengiriman != 'pesanan telah dikirim';
 
     return Scaffold(
       appBar: AppBar(
@@ -153,6 +175,32 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   ),
                 ),
               ),
+            
+            if (canBeCancelled) ...[
+              if (canBeCompleted) const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: isLoading ? null : _batalkanPesanan,
+                  icon: isLoading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Icon(Icons.cancel_rounded),
+                  label: const Text('Batalkan Pesanan',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red.shade600,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    elevation: 4,
+                  ),
+                ),
+              ),
+            ]
           ],
         ),
       ),

@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../services/auth_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.0.112:8000/api';
+  static const String baseUrl = "http://192.168.1.40:8000/api";
 
   // POST pesanan
   static Future<Map<String, dynamic>?> kirimPesanan(Map<String, dynamic> data) async {
@@ -65,6 +65,23 @@ class ApiService {
       return response.statusCode == 200;
     } catch (e) {
       print('ERROR SELESAIKAN: $e');
+      return false;
+    }
+  }
+
+  // POST batalkan pesanan (pelanggan)
+  static Future<bool> batalkanPesanan(int orderId) async {
+    final token = await AuthService.getToken();
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/pesanan/$orderId/batal'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+      return response.statusCode == 200;
+    } catch (e) {
       return false;
     }
   }
