@@ -40,10 +40,8 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
   }
 
   int get calculatedTotalBiaya {
-    int beratKg = int.tryParse(beratController.text) ?? 0;
-    if (beratKg <= 0 || alamatTujuanController.text.isEmpty) return 0;
-    
-    double tonase = beratKg / 1000.0;
+    double tonase = double.tryParse(beratController.text.replaceAll(',', '.')) ?? 0.0;
+    if (tonase <= 0 || alamatTujuanController.text.isEmpty) return 0;
     
     String alamat = alamatTujuanController.text.toLowerCase();
     int rate = 150000; // Harga default per Ton
@@ -74,12 +72,15 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => isLoading = true);
 
+    double tonase = double.tryParse(beratController.text.replaceAll(',', '.')) ?? 0.0;
+    int beratKg = (tonase * 1000).toInt();
+
     final result = await ApiService.kirimPesanan({
       'nama_pabrik': namaPabrikController.text,
       'alamat_asal': alamatAsalController.text,
       'alamat_tujuan': alamatTujuanController.text,
       'jenis_barang': jenisBarangController.text,
-      'berat': int.parse(beratController.text),
+      'berat': beratKg,
       'total_biaya': calculatedTotalBiaya,
     });
 
@@ -231,14 +232,15 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
                 const SizedBox(height: 10),
                 _input(
                   controller: beratController,
-                  label: 'Berat (kg)',
+                  label: 'Berat (Ton)',
                   icon: Icons.scale_outlined,
-                  keyboardType: TextInputType.number,
-                  hint: 'Contoh: 1500 (Ketik angkanya saja)',
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  hint: 'Contoh: 1.5 (Gunakan koma/titik)',
                   validator: (v) {
                     if (v == null || v.isEmpty) return 'Berat wajib diisi';
-                    if (int.tryParse(v) == null) return 'Masukkan angka';
-                    if (int.parse(v) <= 0) return 'Berat tidak valid';
+                    final cleanedInput = v.replaceAll(',', '.');
+                    if (double.tryParse(cleanedInput) == null) return 'Masukkan angka';
+                    if (double.parse(cleanedInput) <= 0) return 'Berat tidak valid';
                     return null;
                   },
                 ),
