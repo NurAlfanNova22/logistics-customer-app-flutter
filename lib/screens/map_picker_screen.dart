@@ -280,7 +280,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                           ),
                         ),
                         child: _isLoading 
-                            ? const CircularProgressIndicator(color: Colors.white)
+                            ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
                             : const Text('Pilih Titik Ini', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                       ),
                     ),

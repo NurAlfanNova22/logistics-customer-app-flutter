@@ -40,17 +40,19 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
   }
 
   int get calculatedTotalBiaya {
-    int berat = int.tryParse(beratController.text) ?? 0;
-    if (berat <= 0 || alamatTujuanController.text.isEmpty) return 0;
+    int beratKg = int.tryParse(beratController.text) ?? 0;
+    if (beratKg <= 0 || alamatTujuanController.text.isEmpty) return 0;
+    
+    double tonase = beratKg / 1000.0;
     
     String alamat = alamatTujuanController.text.toLowerCase();
-    int rate = 150000; // Harga default
+    int rate = 150000; // Harga default per Ton
     if (alamat.contains('bandung')) {
       rate = 125000;
     } else if (alamat.contains('tulungagung') || alamat.contains('kediri') || alamat.contains('pare') || alamat.contains('blitar')) {
       rate = 110000;
     }
-    return berat * rate;
+    return (tonase * rate).toInt();
   }
 
   String _formatCurrency(int amount) {
