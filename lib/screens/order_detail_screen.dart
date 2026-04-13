@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../app_theme.dart';
 import 'tracking_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   final Map<String, dynamic> pesanan;
@@ -33,6 +35,20 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           _currentPesanan['status_pengiriman'] = data['status_pengiriman'];
         }
       });
+    }
+  }
+
+  Future<void> _bayarSekarang() async {
+    final urlStr = _currentPesanan['payment_url'];
+    if (urlStr != null && urlStr.isNotEmpty) {
+      final url = Uri.parse(urlStr);
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tidak dapat membuka link pembayaran.')));
+      }
+    } else {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Link pembayaran belum tersedia dari sisi server.')));
     }
   }
 
@@ -93,6 +109,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final isTrackingAvailable = statusPengiriman == 'dalam perjalanan';
     final canBeCancelled = status != 'dibatalkan' && status != 'selesai' && statusPengiriman != 'dalam perjalanan' && statusPengiriman != 'pesanan telah dikirim';
 
+    final statusPembayaran = (_currentPesanan['status_pembayaran'] ?? 'BELUM DIBAYAR').toString().toUpperCase();
+    final totalBiaya = _currentPesanan['total_biaya'] ?? 0;
+    final formatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detail Pesanan'),
@@ -137,6 +157,33 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 _infoRow('Berat', '${_currentPesanan['berat']} kg', context),
               ],
             ),
+            const SizedBox(height: 12),
+            if (totalBiaya > 0)
+              _SectionCard(
+                title: 'Informasi Tagihan & Pembayaran',
+                icon: Icons.payments_outlined,
+                children: [
+                  _infoRow('Estimasi Biaya', formatter.format(totalBiaya), context, highlight: true),
+                  _infoRow('Status', statusPembayaran == 'SUDAH DIBAYAR' ? 'LUNAS ✅' : statusPembayaran, context, highlight: statusPembayaran == 'SUDAH DIBAYAR'),
+                  if (statusPembayaran != 'SUDAH DIBAYAR' && totalBiaya > 0 && status != 'dibatalkan') ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        onPressed: _bayarSekarang,
+                        icon: const Icon(Icons.payment_rounded, size: 20),
+                        label: const Text('BAYAR VIA MIDTRANS', style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    )
+                  ]
+                ],
+              ),
             const SizedBox(height: 12),
             _SectionCard(
               title: 'Riwayat Pengiriman',
