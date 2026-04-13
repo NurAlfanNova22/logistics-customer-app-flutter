@@ -16,9 +16,43 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
   // Titik awal Blitar
   LatLng _currentCenter = const LatLng(-8.0983, 112.1609);
   bool _isLoading = false;
+  bool _isSearching = false;
 
   void _onCameraMove(CameraPosition position) {
     _currentCenter = position.target;
+  }
+
+  Future<void> _cariLokasi(String query) async {
+    if (query.trim().isEmpty) return;
+    
+    // Hide keyboard
+    FocusManager.instance.primaryFocus?.unfocus();
+    
+    setState(() => _isSearching = true);
+    try {
+      List<Location> locations = await locationFromAddress(query);
+      if (locations.isNotEmpty) {
+        final loc = locations.first;
+        _mapController.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: LatLng(loc.latitude, loc.longitude),
+              zoom: 16,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Lokasi tidak ditemukan. Coba gunakan nama kota secara spesifik.')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSearching = false);
+      }
+    }
   }
 
   Future<void> _konfirmasiLokasi() async {
@@ -102,6 +136,43 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
               decoration: const BoxDecoration(
                 color: Colors.black45,
                 shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          
+          // Kotak Pencarian Pintar (Search Bar)
+          Positioned(
+            top: 16,
+            left: 16,
+            right: 16,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 3)),
+                ],
+              ),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Cari Kota, Kecamatan, atau Jalan...',
+                  hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+                  prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  suffixIcon: _isSearching
+                      ? const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: SizedBox(
+                            width: 20, 
+                            height: 20, 
+                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary)
+                          ),
+                        )
+                      : null,
+                ),
+                textInputAction: TextInputAction.search,
+                onSubmitted: _cariLokasi,
               ),
             ),
           ),
