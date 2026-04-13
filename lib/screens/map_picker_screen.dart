@@ -79,32 +79,25 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
     setState(() => _isLoading = true);
     
     try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-        _currentCenter.latitude,
-        _currentCenter.longitude,
+      final response = await http.get(
+        Uri.parse('https://nominatim.openstreetmap.org/reverse?lat=${_currentCenter.latitude}&lon=${_currentCenter.longitude}&format=json'),
+        headers: {
+          'User-Agent': 'LancarEkspedisiApp/1.0',
+        }
       );
 
-      if (placemarks.isNotEmpty) {
-        Placemark place = placemarks.first;
-        
-        List<String> addressParts = [];
-        if (place.street != null && place.street!.isNotEmpty) addressParts.add(place.street!);
-        if (place.subLocality != null && place.subLocality!.isNotEmpty) addressParts.add(place.subLocality!);
-        if (place.locality != null && place.locality!.isNotEmpty) addressParts.add(place.locality!);
-        if (place.subAdministrativeArea != null && place.subAdministrativeArea!.isNotEmpty) addressParts.add(place.subAdministrativeArea!);
-        
-        String fullAddress = addressParts.join(', ');
-        
-        if (mounted) {
-          Navigator.pop(context, fullAddress);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['display_name'] != null && data['display_name'].toString().isNotEmpty) {
+           if (mounted) Navigator.pop(context, data['display_name']);
+           return;
         }
-      } else {
-        throw Exception("Gagal mendapatkan nama lokasi");
       }
+      throw Exception("Gagal mendapatkan nama lokasi");
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Terjadi kesalahan saat memproses lokasi. Coba pindahkan pin sedikit.')),
+          const SnackBar(content: Text('Terjadi kendala saat membaca titik karena server sibuk. Mohon klik sekali lagi!')),
         );
       }
     } finally {

@@ -316,13 +316,13 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
-      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
       validator: validator ??
           (v) => v == null || v.isEmpty ? '$label wajib diisi' : null,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(fontSize: 17),
-        floatingLabelStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.primary),
+        labelStyle: const TextStyle(fontSize: 15),
+        floatingLabelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.primary),
         hintText: hint,
         hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13, height: 1.4),
         floatingLabelBehavior: FloatingLabelBehavior.always,
