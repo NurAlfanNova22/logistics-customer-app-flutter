@@ -187,6 +187,7 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
                   controller: namaPabrikController,
                   label: 'Nama Pabrik',
                   icon: Icons.business_outlined,
+                  hint: 'Contoh: PT. Sumber Makmur Jaya',
                 ),
               ],
             ),
@@ -223,6 +224,7 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
                   controller: jenisBarangController,
                   label: 'Jenis Barang',
                   icon: Icons.category_outlined,
+                  hint: 'Contoh: Pupuk Organik, Beras, Semen',
                 ),
                 const SizedBox(height: 10),
                 _input(
@@ -230,6 +232,7 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
                   label: 'Berat (kg)',
                   icon: Icons.scale_outlined,
                   keyboardType: TextInputType.number,
+                  hint: 'Contoh: 1500 (Ketik angkanya saja)',
                   validator: (v) {
                     if (v == null || v.isEmpty) return 'Berat wajib diisi';
                     if (int.tryParse(v) == null) return 'Masukkan angka';
