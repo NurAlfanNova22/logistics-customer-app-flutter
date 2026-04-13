@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
+import 'dart:convert';
+import 'dart:async';
+import 'package:http/http.dart' as http;
 import '../app_theme.dart';
 
 class MapPickerScreen extends StatefulWidget {
@@ -13,46 +16,63 @@ class MapPickerScreen extends StatefulWidget {
 class _MapPickerScreenState extends State<MapPickerScreen> {
   late GoogleMapController _mapController;
   
-  // Titik awal Blitar
   LatLng _currentCenter = const LatLng(-8.0983, 112.1609);
   bool _isLoading = false;
   bool _isSearching = false;
+  
+  List<dynamic> _searchResults = [];
+  Timer? _debounce;
+  final TextEditingController _searchController = TextEditingController();
 
   void _onCameraMove(CameraPosition position) {
     _currentCenter = position.target;
   }
 
-  Future<void> _cariLokasi(String query) async {
-    if (query.trim().isEmpty) return;
-    
-    // Hide keyboard
-    FocusManager.instance.primaryFocus?.unfocus();
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 600), () {
+      _fetchAutocomplete(query);
+    });
+  }
+
+  Future<void> _fetchAutocomplete(String query) async {
+    if (query.trim().isEmpty) {
+      if (mounted) setState(() => _searchResults = []);
+      return;
+    }
     
     setState(() => _isSearching = true);
     try {
-      List<Location> locations = await locationFromAddress(query);
-      if (locations.isNotEmpty) {
-        final loc = locations.first;
-        _mapController.animateCamera(
-          CameraUpdate.newCameraPosition(
-            CameraPosition(
-              target: LatLng(loc.latitude, loc.longitude),
-              zoom: 16,
-            ),
-          ),
-        );
+      final response = await http.get(Uri.parse(
+          'https://nominatim.openstreetmap.org/search?q=$query&format=json&countrycodes=id&addressdetails=1&limit=5'),
+          headers: {
+            'User-Agent': 'LancarEkspedisiApp/1.0',
+          });
+          
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (mounted) {
+          setState(() {
+            _searchResults = data;
+          });
+        }
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Lokasi tidak ditemukan. Coba gunakan nama kota secara spesifik.')),
-        );
-      }
+      print(e);
     } finally {
-      if (mounted) {
-        setState(() => _isSearching = false);
-      }
+      if (mounted) setState(() => _isSearching = false);
     }
+  }
+
+  Future<void> _cariLokasiSubmit(String query) async {
+     FocusManager.instance.primaryFocus?.unfocus();
+     if (_searchResults.isNotEmpty) {
+        final loc = _searchResults.first;
+        final lat = double.parse(loc['lat']);
+        final lon = double.parse(loc['lon']);
+        _mapController.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat, lon), 16));
+        setState(() => _searchResults = []);
+     }
   }
 
   Future<void> _konfirmasiLokasi() async {
@@ -154,6 +174,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                 ],
               ),
               child: TextField(
+                controller: _searchController,
                 decoration: InputDecoration(
                   hintText: 'Cari Kota, Kecamatan, atau Jalan...',
                   hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
@@ -169,13 +190,62 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary)
                           ),
                         )
-                      : null,
+                      : (_searchController.text.isNotEmpty ? IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () {
+                             _searchController.clear();
+                             setState(() => _searchResults = []);
+                          },
+                        ) : null),
                 ),
                 textInputAction: TextInputAction.search,
-                onSubmitted: _cariLokasi,
+                onChanged: _onSearchChanged,
+                onSubmitted: _cariLokasiSubmit,
               ),
             ),
           ),
+
+          // Autocomplete Dropdown List
+          if (_searchResults.isNotEmpty)
+            Positioned(
+              top: 76,
+              left: 16,
+              right: 16,
+              child: Container(
+                constraints: const BoxConstraints(maxHeight: 250),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 5))],
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  padding: EdgeInsets.zero,
+                  itemCount: _searchResults.length,
+                  separatorBuilder: (c, i) => const Divider(height: 1, color: Colors.black12),
+                  itemBuilder: (context, index) {
+                    final item = _searchResults[index];
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      leading: const Icon(Icons.location_on, color: Colors.red),
+                      title: Text(item['display_name'] ?? '', style: const TextStyle(fontSize: 13, height: 1.3)),
+                      onTap: () {
+                         final lat = double.parse(item['lat']);
+                         final lon = double.parse(item['lon']);
+                         
+                         FocusManager.instance.primaryFocus?.unfocus();
+                         setState(() {
+                            _searchResults = [];
+                            _searchController.text = item['name'] ?? item['display_name'] ?? '';
+                         });
+                         
+                         _mapController.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat, lon), 16));
+                      },
+                    );
+                  },
+                ),
+              ),
+            ),
           
           // Confirm Button
           Positioned(
