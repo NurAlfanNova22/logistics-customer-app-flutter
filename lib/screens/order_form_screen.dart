@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../app_theme.dart';
+import 'map_picker_screen.dart';
 
 class OrderFormScreen extends StatefulWidget {
   final Function(int)? onOrderSuccess;
@@ -196,16 +197,20 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
               children: [
                 _input(
                   controller: alamatAsalController,
-                  label: 'Alamat Asal',
+                  label: 'Alamat Asal (Pengambilan)',
                   icon: Icons.my_location_rounded,
-                  maxLines: 2,
+                  hint: 'Contoh: Jl. Diponegoro No. 12, Kec. Sananwetan, Kota Blitar (Patokan: Sebelah utara Indomaret)',
+                  maxLines: 3,
+                  isAddress: true,
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 14),
                 _input(
                   controller: alamatTujuanController,
-                  label: 'Alamat Tujuan',
+                  label: 'Alamat Tujuan (Pengiriman)',
                   icon: Icons.location_on_outlined,
-                  maxLines: 2,
+                  hint: 'Contoh: Gudang Indah Cargo, Kec. Bandung, Kab. Tulungagung',
+                  maxLines: 3,
+                  isAddress: true,
                 ),
               ],
             ),
@@ -304,16 +309,42 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
     int maxLines = 1,
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
+    String? hint,
+    bool isAddress = false,
   }) {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
+      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
       validator: validator ??
           (v) => v == null || v.isEmpty ? '$label wajib diisi' : null,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon),
+        labelStyle: const TextStyle(fontSize: 16),
+        hintText: hint,
+        hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13, height: 1.4),
+        floatingLabelBehavior: FloatingLabelBehavior.always,
+        alignLabelWithHint: maxLines > 1,
+        prefixIcon: Padding(
+          padding: EdgeInsets.only(bottom: maxLines > 1 ? 40.0 : 0),
+          child: Icon(icon, size: 22),
+        ),
+        suffixIcon: isAddress 
+            ? IconButton(
+                icon: const Icon(Icons.map_rounded, color: AppColors.primary),
+                tooltip: 'Pilih dari Peta',
+                onPressed: () async {
+                   final result = await Navigator.push(
+                     context,
+                     MaterialPageRoute(builder: (context) => const MapPickerScreen()),
+                   );
+                   if (result != null && result is String) {
+                     controller.text = result;
+                   }
+                },
+              )
+            : null,
       ),
     );
   }
