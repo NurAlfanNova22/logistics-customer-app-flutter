@@ -21,6 +21,52 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
 
   bool isLoading = false;
 
+  @override
+  void initState() {
+    super.initState();
+    alamatTujuanController.addListener(() => setState(() {}));
+    beratController.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    namaPabrikController.dispose();
+    alamatAsalController.dispose();
+    alamatTujuanController.dispose();
+    jenisBarangController.dispose();
+    beratController.dispose();
+    super.dispose();
+  }
+
+  int get calculatedTotalBiaya {
+    int berat = int.tryParse(beratController.text) ?? 0;
+    if (berat <= 0 || alamatTujuanController.text.isEmpty) return 0;
+    
+    String alamat = alamatTujuanController.text.toLowerCase();
+    int rate = 150000; // Harga default
+    if (alamat.contains('bandung')) {
+      rate = 125000;
+    } else if (alamat.contains('tulungagung') || alamat.contains('kediri') || alamat.contains('pare') || alamat.contains('blitar')) {
+      rate = 110000;
+    }
+    return berat * rate;
+  }
+
+  String _formatCurrency(int amount) {
+    final stringAmount = amount.toString();
+    String result = '';
+    int count = 0;
+    for (int i = stringAmount.length - 1; i >= 0; i--) {
+      if (count == 3) {
+        result = '.$result';
+        count = 0;
+      }
+      result = stringAmount[i] + result;
+      count++;
+    }
+    return 'Rp $result';
+  }
+
   Future<void> submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => isLoading = true);
@@ -31,6 +77,7 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
       'alamat_tujuan': alamatTujuanController.text,
       'jenis_barang': jenisBarangController.text,
       'berat': int.parse(beratController.text),
+      'total_biaya': calculatedTotalBiaya,
     });
 
     setState(() => isLoading = false);
@@ -197,30 +244,54 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
           border:
               Border(top: BorderSide(color: context.borderColor, width: 0.5)),
         ),
-        child: SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton(
-            onPressed: isLoading ? null : submit,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              disabledBackgroundColor: AppColors.primary.withOpacity(0.4),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
-              elevation: 4,
-              shadowColor: AppColors.primary.withOpacity(0.4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (calculatedTotalBiaya > 0)
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Estimasi Total Biaya:', 
+                        style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.primaryDark)),
+                    Text(_formatCurrency(calculatedTotalBiaya), 
+                        style: const TextStyle(color: AppColors.primary, fontSize: 18, fontWeight: FontWeight.w800)),
+                  ],
+                ),
+              ),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: isLoading ? null : submit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  disabledBackgroundColor: AppColors.primary.withOpacity(0.4),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
+                  elevation: 4,
+                  shadowColor: AppColors.primary.withOpacity(0.4),
+                ),
+                child: isLoading
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2.5),
+                      )
+                    : const Text('Kirim Pesanan',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w700)),
+              ),
             ),
-            child: isLoading
-                ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                        color: Colors.white, strokeWidth: 2.5),
-                  )
-                : const Text('Kirim Pesanan',
-                    style: TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w700)),
-          ),
+          ],
         ),
       ),
     );
