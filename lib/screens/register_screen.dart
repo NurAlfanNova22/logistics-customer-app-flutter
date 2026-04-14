@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
-import 'main_screen.dart';
-import 'register_screen.dart';
 import '../services/auth_service.dart';
+import 'main_screen.dart';
 import '../app_theme.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
-    with SingleTickerProviderStateMixin {
+class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProviderStateMixin {
+  final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   bool isLoading = false;
@@ -38,18 +37,26 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void dispose() {
     _animController.dispose();
+    nameController.dispose();
     emailController.dispose();
     passwordController.dispose();
     super.dispose();
   }
 
-  Future<void> _login() async {
+  Future<void> _register() async {
+    final name = nameController.text.trim();
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
-    if (email.isEmpty || password.isEmpty) return;
+    
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Semua field harus diisi')),
+      );
+      return;
+    }
 
     setState(() => isLoading = true);
-    final success = await AuthService.login(email, password);
+    final success = await AuthService.register(name, email, password);
     if (!mounted) return;
     setState(() => isLoading = false);
 
@@ -60,7 +67,7 @@ class _LoginScreenState extends State<LoginScreen>
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Email atau password salah')),
+        const SnackBar(content: Text('Registrasi gagal. Email mungkin sudah terdaftar.')),
       );
     }
   }
@@ -130,7 +137,7 @@ class _LoginScreenState extends State<LoginScreen>
                               ),
                             ),
                             Text(
-                              'Aplikasi Klien',
+                              'Daftar Akun Baru',
                               style: TextStyle(
                                   fontSize: 12,
                                   color: AppColors.primary,
@@ -144,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen>
                     const SizedBox(height: 48),
 
                     Text(
-                      'Selamat Datang',
+                      'Buat Akun',
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
@@ -154,12 +161,22 @@ class _LoginScreenState extends State<LoginScreen>
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Masuk untuk mengelola pesanan ekspedisi Anda',
+                      'Lengkapi data di bawah untuk bergabung',
                       style: TextStyle(
                           fontSize: 14, color: context.textSecondaryColor),
                     ),
 
                     const SizedBox(height: 36),
+
+                    // Name
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nama Lengkap / Pabrik',
+                        prefixIcon: Icon(Icons.person_outline_rounded),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
 
                     // Email
                     TextField(
@@ -194,12 +211,12 @@ class _LoginScreenState extends State<LoginScreen>
 
                     const SizedBox(height: 28),
 
-                    // Login button
+                    // Register button
                     SizedBox(
                       width: double.infinity,
                       height: 52,
                       child: ElevatedButton(
-                        onPressed: isLoading ? null : _login,
+                        onPressed: isLoading ? null : _register,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           disabledBackgroundColor:
@@ -217,38 +234,26 @@ class _LoginScreenState extends State<LoginScreen>
                                     color: Colors.white, strokeWidth: 2.5),
                               )
                             : const Text(
-                                'Masuk',
+                                'Daftar Sekarang',
                                 style: TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.w700),
+                                    fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
                               ),
                       ),
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('Belum punya akun?', 
+                        Text('Sudah punya akun?', 
                         style: TextStyle(color: context.textSecondaryColor)),
                         TextButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                            );
-                          },
-                          child: const Text('Daftar di sini', 
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Masuk di sini', 
                           style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 32),
-                    Center(
-                      child: Text(
-                        '© 2025 Lancar Ekspedisi',
-                        style: TextStyle(
-                            fontSize: 12, color: context.textMutedColor),
-                      ),
                     ),
                   ],
                 ),

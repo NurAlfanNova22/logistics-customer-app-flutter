@@ -7,10 +7,12 @@ class ApiService {
 
   // POST pesanan
   static Future<Map<String, dynamic>?> kirimPesanan(Map<String, dynamic> data) async {
+    final token = await AuthService.getToken();
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/pesanan'),
         headers: {
+          'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },

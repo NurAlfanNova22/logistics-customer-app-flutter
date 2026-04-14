@@ -63,4 +63,28 @@ class AuthService {
       return null;
     }
   }
+
+  static Future<bool> register(String name, String email, String password) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/register'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+        'name': name,
+        'email': email,
+        'password': password,
+      }),
+    );
+
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('token', data['token']);
+      return true;
+    } else {
+      return false;
+    }
+  }
 }

@@ -146,6 +146,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 _infoRow('Alamat Asal', _currentPesanan['alamat_asal'], context),
                 _infoRow('Alamat Tujuan', _currentPesanan['alamat_tujuan'], context),
                 _infoRow('Status', displayStatus.toUpperCase(), context, highlight: true),
+                _infoRow('Tanggal Pesan', DateFormat('dd MMM yyyy, HH:mm').format(DateTime.parse(_currentPesanan['created_at'].toString())), context),
+                if (_currentPesanan['tanggal_dikirim'] != null)
+                  _infoRow('Tanggal Dikirim', DateFormat('dd MMM yyyy, HH:mm').format(DateTime.parse(_currentPesanan['tanggal_dikirim'].toString())), context),
                 if (_currentPesanan['tanggal_selesai'] != null)
                   _infoRow('Diterima pada', DateFormat('dd MMM yyyy, HH:mm').format(DateTime.parse(_currentPesanan['tanggal_selesai'].toString())), context),
               ],
