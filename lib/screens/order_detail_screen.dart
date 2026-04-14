@@ -146,6 +146,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 _infoRow('Alamat Asal', _currentPesanan['alamat_asal'], context),
                 _infoRow('Alamat Tujuan', _currentPesanan['alamat_tujuan'], context),
                 _infoRow('Status', displayStatus.toUpperCase(), context, highlight: true),
+                if (_currentPesanan['tanggal_selesai'] != null)
+                  _infoRow('Diterima pada', DateFormat('dd MMM yyyy, HH:mm').format(DateTime.parse(_currentPesanan['tanggal_selesai'].toString())), context),
               ],
             ),
             const SizedBox(height: 12),
