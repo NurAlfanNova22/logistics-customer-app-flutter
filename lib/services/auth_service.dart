@@ -64,27 +64,42 @@ class AuthService {
     }
   }
 
-  static Future<bool> register(String name, String email, String password) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/register'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: jsonEncode({
-        'name': name,
-        'email': email,
-        'password': password,
-      }),
-    );
+  static Future<Map<String, dynamic>> register(String name, String email, String password) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/register'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'name': name,
+          'email': email,
+          'password': password,
+        }),
+      );
 
-    if (response.statusCode == 201 || response.statusCode == 200) {
+      print("DEBUG REGISTER - Status: ${response.statusCode}");
+      print("DEBUG REGISTER - Body: ${response.body}");
+
       final data = jsonDecode(response.body);
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('token', data['token']);
-      return true;
-    } else {
-      return false;
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', data['token']);
+        return {'success': true, 'message': data['message'] ?? 'Berhasil'};
+      } else {
+        // Ambil pesan error dari Laravel (biasanya ada di data['message'] atau data['errors'])
+        String errorMsg = data['message'] ?? 'Registrasi gagal';
+        if (data['errors'] != null && data['errors'] is Map) {
+          final errors = data['errors'] as Map;
+          errorMsg = errors.values.first[0].toString(); // Ambil error pertama
+        }
+        return {'success': false, 'message': errorMsg};
+      }
+    } catch (e) {
+      print("DEBUG REGISTER - Error Catch: $e");
+      return {'success': false, 'message': 'Terjadi kesalahan koneksi: $e'};
     }
   }
 }

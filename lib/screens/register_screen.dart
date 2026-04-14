@@ -56,18 +56,18 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
     }
 
     setState(() => isLoading = true);
-    final success = await AuthService.register(name, email, password);
+    final result = await AuthService.register(name, email, password);
     if (!mounted) return;
     setState(() => isLoading = false);
 
-    if (success) {
+    if (result['success']) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MainScreen()),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Registrasi gagal. Email mungkin sudah terdaftar.')),
+        SnackBar(content: Text(result['message'])),
       );
     }
   }
