@@ -105,7 +105,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     if (status == 'menunggu konfirmasi') displayStatus = 'menunggu konfirmasi';
     if (statusPengiriman == 'menunggu pickup') displayStatus = 'sopir mengambil barang';
     
-    final canBeCompleted = status != 'selesai' && statusPengiriman == 'pesanan telah dikirim';
+    final isShipped = statusPengiriman == 'pesanan telah dikirim';
+    final isPaid = (_currentPesanan['status_pembayaran'] ?? '').toString().toUpperCase() == 'SUDAH DIBAYAR';
+    final isCancelled = status == 'dibatalkan';
+    
+    final canBeCompleted = status != 'selesai' && isShipped && (totalBiaya == 0 || isPaid);
     final isTrackingAvailable = statusPengiriman == 'dalam perjalanan';
     final canBeCancelled = status != 'dibatalkan' && status != 'selesai' && statusPengiriman != 'dalam perjalanan' && statusPengiriman != 'pesanan telah dikirim';
 
@@ -170,7 +174,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 children: [
                   _infoRow('Estimasi Biaya', formatter.format(totalBiaya), context, highlight: true),
                   _infoRow('Status', statusPembayaran == 'SUDAH DIBAYAR' ? 'LUNAS ✅' : statusPembayaran, context, highlight: statusPembayaran == 'SUDAH DIBAYAR'),
-                  if (statusPembayaran != 'SUDAH DIBAYAR' && totalBiaya > 0 && status != 'dibatalkan') ...[
+                  if (!isPaid && totalBiaya > 0 && !isCancelled && isShipped) ...[
                     const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
