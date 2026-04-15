@@ -105,16 +105,17 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     if (status == 'menunggu konfirmasi') displayStatus = 'menunggu konfirmasi';
     if (statusPengiriman == 'menunggu pickup') displayStatus = 'sopir mengambil barang';
     
+    final statusPembayaran = (_currentPesanan['status_pembayaran'] ?? 'BELUM DIBAYAR').toString().toUpperCase();
+    final totalBiaya = _currentPesanan['total_biaya'] ?? 0;
+
     final isShipped = statusPengiriman == 'pesanan telah dikirim';
-    final isPaid = (_currentPesanan['status_pembayaran'] ?? '').toString().toUpperCase() == 'SUDAH DIBAYAR';
+    final isPaid = statusPembayaran == 'SUDAH DIBAYAR';
     final isCancelled = status == 'dibatalkan';
     
     final canBeCompleted = status != 'selesai' && isShipped && (totalBiaya == 0 || isPaid);
     final isTrackingAvailable = statusPengiriman == 'dalam perjalanan';
     final canBeCancelled = status != 'dibatalkan' && status != 'selesai' && statusPengiriman != 'dalam perjalanan' && statusPengiriman != 'pesanan telah dikirim';
 
-    final statusPembayaran = (_currentPesanan['status_pembayaran'] ?? 'BELUM DIBAYAR').toString().toUpperCase();
-    final totalBiaya = _currentPesanan['total_biaya'] ?? 0;
     final formatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
     return Scaffold(
