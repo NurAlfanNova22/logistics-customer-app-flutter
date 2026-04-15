@@ -102,4 +102,28 @@ class AuthService {
       return {'success': false, 'message': 'Terjadi kesalahan koneksi: $e'};
     }
   }
+
+  static Future<bool> updateProfile(String name, String email) async {
+    final token = await getToken();
+    if (token == null) return false;
+
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/user/profile'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'name': name,
+          'email': email,
+        }),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
 }
