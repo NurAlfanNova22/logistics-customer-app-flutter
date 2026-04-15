@@ -8,6 +8,7 @@ class ApiService {
   // POST pesanan
   static Future<Map<String, dynamic>?> kirimPesanan(Map<String, dynamic> data) async {
     final token = await AuthService.getToken();
+    print('DEBUG ORDER - Token: $token');
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/pesanan'),
@@ -19,16 +20,18 @@ class ApiService {
         body: jsonEncode(data),
       );
 
-      print('STATUS: ${response.statusCode}');
-      print('BODY: ${response.body}');
+      print('DEBUG ORDER - Status: ${response.statusCode}');
+      print('DEBUG ORDER - Body: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return jsonDecode(response.body);
+      } else if (response.statusCode == 401) {
+        print('DEBUG ORDER - Error: Sesi tidak valid / Belum login');
       }
 
       return null;
     } catch (e) {
-      print('ERROR API: $e');
+      print('DEBUG ORDER - Exception: $e');
       return null;
     }
   }
@@ -36,19 +39,24 @@ class ApiService {
   // GET list pesanan
   static Future<List<dynamic>> getPesanan() async {
     final token = await AuthService.getToken();
-
+    print('DEBUG GET_PESANAN - Token: $token');
+    
     final response = await http.get(
       Uri.parse('$baseUrl/pesanan'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
     );
+
+    print('DEBUG GET_PESANAN - Status: ${response.statusCode}');
+    print('DEBUG GET_PESANAN - Body: ${response.body}');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw Exception('Failed to load data');
+      throw Exception('Failed to load data: ${response.statusCode}');
     }
   }
 

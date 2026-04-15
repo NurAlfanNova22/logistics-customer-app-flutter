@@ -23,6 +23,16 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
+  assets:
+    - assets/icon/logo.png
   uses-material-design: true
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/logo.png" # untuk iOS
+  adaptive_icon_background: "assets/icon/bg.png"
+  adaptive_icon_foreground: "assets/icon/fg.png"
