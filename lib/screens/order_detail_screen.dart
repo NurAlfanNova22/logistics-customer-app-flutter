@@ -30,9 +30,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     if (mounted && data != null) {
       setState(() {
         _trackingData = data;
-        // Update shipping status from tracking data if available
-        if (data.containsKey('status_pengiriman')) {
-          _currentPesanan['status_pengiriman'] = data['status_pengiriman'];
+        // Update seluruh data pesanan terbaru (termasuk link bayar)
+        if (data.containsKey('pesanan')) {
+          _currentPesanan = Map<String, dynamic>.from(data['pesanan']);
         }
       });
     }
