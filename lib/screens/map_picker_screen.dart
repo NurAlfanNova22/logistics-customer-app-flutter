@@ -3,6 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
+import 'package:geolocator/geolocator.dart';
 import '../app_theme.dart';
 
 class MapPickerScreen extends StatefulWidget {
@@ -74,6 +75,41 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
      }
   }
 
+  Future<void> _goToMyLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('GPS tidak aktif. Mohon aktifkan GPS Anda.')));
+      return;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Izin lokasi ditolak.')));
+        return;
+      }
+    }
+    
+    if (permission == LocationPermission.deniedForever) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Izin lokasi ditolak permanen. Mohon aktifkan di pengaturan.')));
+      return;
+    } 
+
+    if (mounted) setState(() => _isLoading = true);
+    try {
+        final position = await Geolocator.getCurrentPosition();
+        _mapController.animateCamera(CameraUpdate.newLatLngZoom(LatLng(position.latitude, position.longitude), 16));
+    } catch (e) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal mengambil lokasi saat ini.')));
+    } finally {
+        if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _konfirmasiLokasi() async {
     setState(() => _isLoading = true);
     
@@ -124,6 +160,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
             ),
             onMapCreated: (controller) => _mapController = controller,
             onCameraMove: _onCameraMove,
+            myLocationEnabled: true,
             myLocationButtonEnabled: false,
             zoomControlsEnabled: false,
           ),
@@ -238,6 +275,19 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                 ),
               ),
             ),
+          
+          // Tombol Lokasi Saat Ini
+          Positioned(
+            bottom: 180,
+            right: 16,
+            child: FloatingActionButton(
+              mini: true,
+              backgroundColor: Colors.white,
+              foregroundColor: AppColors.primary,
+              onPressed: _goToMyLocation,
+              child: const Icon(Icons.my_location_rounded),
+            ),
+          ),
           
           // Confirm Button
           Positioned(
