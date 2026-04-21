@@ -17,6 +17,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
   GoogleMapController? _controller;
   final Set<Marker> _markers = {};
   BitmapDescriptor? _truckIcon;
+  bool _isFirstLocation = true;
   
   // Default position (Jakarta) if no location data yet
   static const CameraPosition _initialPosition = CameraPosition(
@@ -93,7 +94,12 @@ class _TrackingScreenState extends State<TrackingScreen> {
           );
         });
 
-        _controller?.animateCamera(CameraUpdate.newLatLng(pos));
+        if (_isFirstLocation) {
+          _isFirstLocation = false;
+          _controller?.animateCamera(CameraUpdate.newLatLngZoom(pos, 15));
+        } else {
+          _controller?.animateCamera(CameraUpdate.newLatLng(pos));
+        }
       }
     });
   }
