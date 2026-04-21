@@ -95,6 +95,29 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
+  void _showCancelConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Batalkan Pesanan?'),
+        content: const Text('Apakah Anda yakin ingin membatalkan pesanan ini? Tindakan ini tidak dapat dibatalkan.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Kembali', style: TextStyle(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _batalkanPesanan();
+            },
+            child: const Text('Ya, Batalkan', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final status = (_currentPesanan['status'] ?? '').toString().toLowerCase();
@@ -239,7 +262,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton.icon(
-                  onPressed: isLoading ? null : _batalkanPesanan,
+                  onPressed: isLoading ? null : _showCancelConfirmation,
                   icon: isLoading
                       ? const SizedBox(
                           width: 18,
