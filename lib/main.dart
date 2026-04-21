@@ -31,6 +31,8 @@ class MyApp extends StatelessWidget {
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: themeMode,
+          themeAnimationDuration: const Duration(milliseconds: 600),
+          themeAnimationCurve: Curves.easeInOut,
           home: FutureBuilder<String?>(
             future: AuthService.getToken(),
             builder: (context, snapshot) {
