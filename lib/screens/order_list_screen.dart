@@ -285,10 +285,10 @@ class _OrderCardState extends State<_OrderCard> {
   @override
   Widget build(BuildContext context) {
     final p = widget.pesanan;
-    final statusText =
-        (p['status']?.toString().toUpperCase() == 'SELESAI')
-            ? 'SELESAI'
-            : (p['status_pengiriman'] ?? p['status']);
+    final mainStatus = (p['status'] ?? '').toString().toUpperCase();
+    final statusText = (mainStatus == 'SELESAI' || mainStatus == 'DIBATALKAN')
+        ? mainStatus
+        : (p['status_pengiriman'] ?? p['status']);
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
@@ -406,6 +406,11 @@ class _OrderCardState extends State<_OrderCard> {
         bgColor = AppColors.successSurface;
         textColor = AppColors.success;
         text = 'SELESAI';
+        break;
+      case 'dibatalkan':
+        bgColor = Colors.red.shade50;
+        textColor = Colors.red.shade700;
+        text = 'DIBATALKAN';
         break;
       default:
         bgColor = AppColors.primarySurface;
