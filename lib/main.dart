@@ -17,8 +17,22 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late Future<String?> _authFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    // Kunci future agar tidak dijalankan ulang saat tema berubah
+    _authFuture = AuthService.getToken();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,12 +48,12 @@ class MyApp extends StatelessWidget {
           themeAnimationDuration: const Duration(milliseconds: 600),
           themeAnimationCurve: Curves.easeInOut,
           home: FutureBuilder<String?>(
-            future: AuthService.getToken(),
+            future: _authFuture, // Gunakan future yang sudah dikunci
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Scaffold(
                   backgroundColor: AppColors.primary,
-                  body: Center(
+                  body: const Center(
                     child: CircularProgressIndicator(color: Colors.white),
                   ),
                 );
