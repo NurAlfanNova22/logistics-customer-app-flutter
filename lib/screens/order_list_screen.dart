@@ -301,7 +301,7 @@ class _OrderCardState extends State<_OrderCard> {
         scale: _pressed ? 0.98 : 1.0,
         duration: const Duration(milliseconds: 100),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 600),
+          duration: const Duration(milliseconds: 200),
           curve: Curves.easeInOut,
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(16),
@@ -328,7 +328,7 @@ class _OrderCardState extends State<_OrderCard> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  _statusBadge(statusText),
+                  _statusBadge(statusText, context),
                 ],
               ),
               const SizedBox(height: 10),
@@ -386,7 +386,7 @@ class _OrderCardState extends State<_OrderCard> {
     );
   }
 
-  Widget _statusBadge(String? status) {
+  Widget _statusBadge(String? status, BuildContext context) {
     final s = status?.toLowerCase() ?? '';
     Color bgColor;
     Color textColor;
@@ -410,8 +410,8 @@ class _OrderCardState extends State<_OrderCard> {
         text = 'SELESAI';
         break;
       case 'dibatalkan':
-        bgColor = Colors.red.shade50;
-        textColor = Colors.red.shade700;
+        bgColor = context.isDark ? Colors.red.withOpacity(0.15) : Colors.red.shade50;
+        textColor = context.isDark ? Colors.red.shade300 : Colors.red.shade700;
         text = 'DIBATALKAN';
         break;
       default:
@@ -420,7 +420,9 @@ class _OrderCardState extends State<_OrderCard> {
         text = 'MENUNGGU';
     }
 
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: bgColor,

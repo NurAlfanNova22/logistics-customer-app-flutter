@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -25,13 +26,13 @@ class AuthService {
       final data = jsonDecode(response.body);
 
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('token', data['token']); // ✅ INI YANG BENAR
+      await prefs.setString('token', data['token']);
 
       return true;
     } else {
       return false;
     }
-}
+  }
 
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
@@ -64,20 +65,23 @@ class AuthService {
     }
   }
 
-  static Future<Map<String, dynamic>> register(String name, String email, String password) async {
+  static Future<Map<String, dynamic>> register(String name, String email, String password, {File? image}) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/register'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode({
-          'name': name,
-          'email': email,
-          'password': password,
-        }),
-      );
+      var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/register'));
+      request.headers.addAll({
+        'Accept': 'application/json',
+      });
+
+      request.fields['name'] = name;
+      request.fields['email'] = email;
+      request.fields['password'] = password;
+
+      if (image != null) {
+        request.files.add(await http.MultipartFile.fromPath('foto', image.path));
+      }
+
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
 
       print("DEBUG REGISTER - Status: ${response.statusCode}");
       print("DEBUG REGISTER - Body: ${response.body}");
@@ -89,11 +93,10 @@ class AuthService {
         await prefs.setString('token', data['token']);
         return {'success': true, 'message': data['message'] ?? 'Berhasil'};
       } else {
-        // Ambil pesan error dari Laravel (biasanya ada di data['message'] atau data['errors'])
         String errorMsg = data['message'] ?? 'Registrasi gagal';
         if (data['errors'] != null && data['errors'] is Map) {
           final errors = data['errors'] as Map;
-          errorMsg = errors.values.first[0].toString(); // Ambil error pertama
+          errorMsg = errors.values.first[0].toString();
         }
         return {'success': false, 'message': errorMsg};
       }
@@ -103,23 +106,28 @@ class AuthService {
     }
   }
 
-  static Future<bool> updateProfile(String name, String email) async {
+  static Future<bool> updateProfile(String name, String email, {File? image}) async {
     final token = await getToken();
     if (token == null) return false;
 
     try {
-      final response = await http.put(
-        Uri.parse('$baseUrl/user/profile'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'name': name,
-          'email': email,
-        }),
-      );
+      // Laravel requires POST with _method=PUT for multipart PUT requests
+      var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/user/profile'));
+      request.headers.addAll({
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      });
+
+      request.fields['name'] = name;
+      request.fields['email'] = email;
+      request.fields['_method'] = 'PUT'; // Method spoofing for Laravel
+
+      if (image != null) {
+        request.files.add(await http.MultipartFile.fromPath('foto', image.path));
+      }
+
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
 
       return response.statusCode == 200;
     } catch (e) {

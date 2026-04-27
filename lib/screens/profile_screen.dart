@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
 import '../app_theme.dart';
@@ -14,6 +16,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? user;
   bool isLoading = true;
+  final String baseStorageUrl = "https://lancarekspedisi.satcloud.tech/storage/";
 
   @override
   void initState() {
@@ -36,7 +39,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => LoginScreen()),
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
       (route) => false,
     );
   }
@@ -46,52 +49,87 @@ class _ProfileScreenState extends State<ProfileScreen> {
     
     final nameController = TextEditingController(text: user!['name']);
     final emailController = TextEditingController(text: user!['email']);
+    File? selectedImage;
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Profil'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'Nama Lengkap'),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('Edit Profil'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Photo Picker in Dialog
+                  GestureDetector(
+                    onTap: () async {
+                      final ImagePicker picker = ImagePicker();
+                      final XFile? picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+                      if (picked != null) {
+                        setDialogState(() => selectedImage = File(picked.path));
+                      }
+                    },
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.primary.withOpacity(0.1),
+                        image: selectedImage != null 
+                          ? DecorationImage(image: FileImage(selectedImage!), fit: BoxFit.cover)
+                          : (user!['foto'] != null 
+                              ? DecorationImage(image: NetworkImage('$baseStorageUrl${user!['foto']}'), fit: BoxFit.cover)
+                              : null),
+                      ),
+                      child: (selectedImage == null && user!['foto'] == null)
+                        ? const Icon(Icons.camera_alt_rounded, color: AppColors.primary)
+                        : null,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: 'Nama Lengkap'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: emailController,
+                    decoration: const InputDecoration(labelText: 'Email'),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final success = await AuthService.updateProfile(
-                nameController.text.trim(),
-                emailController.text.trim(),
-              );
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Batal'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final success = await AuthService.updateProfile(
+                    nameController.text.trim(),
+                    emailController.text.trim(),
+                    image: selectedImage,
+                  );
 
-              if (success && mounted) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Profil berhasil diperbarui')),
-                );
-                _loadProfile();
-              } else if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Gagal memperbarui profil')),
-                );
-              }
-            },
-            child: const Text('Simpan'),
-          ),
-        ],
+                  if (success && mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Profil berhasil diperbarui')),
+                    );
+                    _loadProfile();
+                  } else if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Gagal memperbarui profil')),
+                    );
+                  }
+                },
+                child: const Text('Simpan'),
+              ),
+            ],
+          );
+        }
       ),
     );
   }
@@ -124,10 +162,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Column(
                         children: [
                           Container(
-                            width: 72,
-                            height: 72,
+                            width: 80,
+                            height: 80,
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
+                              gradient: user!['foto'] != null ? null : const LinearGradient(
                                 colors: [
                                   AppColors.primary,
                                   AppColors.primaryDark
@@ -143,17 +181,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   offset: const Offset(0, 6),
                                 ),
                               ],
+                              image: user!['foto'] != null 
+                                ? DecorationImage(
+                                    image: NetworkImage('$baseStorageUrl${user!['foto']}'),
+                                    fit: BoxFit.cover
+                                  )
+                                : null,
                             ),
-                            child: Center(
-                              child: Text(
-                                _getInitials(user!['name']?.toString()),
-                                style: const TextStyle(
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
+                            child: user!['foto'] == null 
+                              ? Center(
+                                  child: Text(
+                                    _getInitials(user!['name']?.toString()),
+                                    style: const TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                )
+                              : null,
                           ),
                           const SizedBox(height: 14),
                           Text(
@@ -189,7 +235,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(height: 28),
 
                     // Settings Card
-                    Container(
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeInOut,
                       decoration: BoxDecoration(
                         color: context.surfaceColor,
                         borderRadius: BorderRadius.circular(16),
@@ -235,7 +283,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(height: 14),
 
                     // App Info Card
-                    Container(
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeInOut,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: context.surfaceColor,
@@ -244,7 +294,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       child: Row(
                         children: [
-                          Container(
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            curve: Curves.easeInOut,
                             width: 36,
                             height: 36,
                             decoration: BoxDecoration(
@@ -317,7 +369,9 @@ class _SettingRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          Container(
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
             width: 32,
             height: 32,
             decoration: BoxDecoration(

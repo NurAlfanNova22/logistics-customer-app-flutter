@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../services/auth_service.dart';
 import 'main_screen.dart';
 import '../app_theme.dart';
@@ -14,6 +16,7 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  File? _image;
   bool isLoading = false;
   bool obscurePassword = true;
 
@@ -43,6 +46,14 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (pickedFile != null) {
+      setState(() => _image = File(pickedFile.path));
+    }
+  }
+
   Future<void> _register() async {
     final name = nameController.text.trim();
     final email = emailController.text.trim();
@@ -56,7 +67,7 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
     }
 
     setState(() => isLoading = true);
-    final result = await AuthService.register(name, email, password);
+    final result = await AuthService.register(name, email, password, image: _image);
     if (!mounted) return;
     setState(() => isLoading = false);
 
@@ -97,58 +108,38 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 56),
+                    const SizedBox(height: 40),
 
                     // Logo + Brand
                     Row(
                       children: [
                         Container(
-                          width: 52,
-                          height: 52,
+                          width: 44,
+                          height: 44,
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
                               colors: [AppColors.primary, AppColors.primaryDark],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
-                            borderRadius: BorderRadius.circular(14),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.primary.withOpacity(0.35),
-                                blurRadius: 16,
-                                offset: const Offset(0, 6),
-                              ),
-                            ],
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(Icons.local_shipping_rounded,
-                              color: Colors.white, size: 26),
+                              color: Colors.white, size: 22),
                         ),
-                        const SizedBox(width: 14),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Lancar Ekspedisi',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                                color: context.textPrimaryColor,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                            Text(
-                              'Daftar Akun Baru',
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w500),
-                            ),
-                          ],
+                        const SizedBox(width: 12),
+                        Text(
+                          'Lancar Ekspedisi',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: context.textPrimaryColor,
+                          ),
                         ),
                       ],
                     ),
 
-                    const SizedBox(height: 48),
+                    const SizedBox(height: 32),
 
                     Text(
                       'Buat Akun',
@@ -166,7 +157,47 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
                           fontSize: 14, color: context.textSecondaryColor),
                     ),
 
-                    const SizedBox(height: 36),
+                    const SizedBox(height: 32),
+
+                    // Profile Image Picker
+                    Center(
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: 100,
+                            height: 100,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.primary.withOpacity(0.1),
+                              border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 2),
+                              image: _image != null 
+                                ? DecorationImage(image: FileImage(_image!), fit: BoxFit.cover) 
+                                : null,
+                            ),
+                            child: _image == null 
+                              ? const Icon(Icons.person_outline_rounded, size: 40, color: AppColors.primary)
+                              : null,
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: GestureDetector(
+                              onTap: _pickImage,
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: const BoxDecoration(
+                                  color: AppColors.primary,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.camera_alt_rounded, size: 18, color: Colors.white),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 32),
 
                     // Name
                     TextField(
