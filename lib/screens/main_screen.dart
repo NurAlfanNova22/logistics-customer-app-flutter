@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dashboard_screen.dart';
 import 'order_form_screen.dart';
-import 'tracking_screen.dart';
 import 'profile_screen.dart';
 import 'order_list_screen.dart';
 import '../app_theme.dart';
@@ -29,7 +28,6 @@ class _MainScreenState extends State<MainScreen> {
       OrderFormScreen(
         onOrderSuccess: (index) => setState(() => _currentIndex = index),
       ),
-      const TrackingScreen(),
       const ProfileScreen(),
     ];
   }
@@ -67,8 +65,6 @@ class _MainScreenState extends State<MainScreen> {
       child: Scaffold(
         body: _pages[_currentIndex],
         bottomNavigationBar: Container(
-
-
           decoration: BoxDecoration(
             color: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
             border: Border(top: BorderSide(color: context.borderColor, width: 0.5)),
@@ -91,11 +87,6 @@ class _MainScreenState extends State<MainScreen> {
                 icon: Icon(Icons.add_box_outlined),
                 activeIcon: Icon(Icons.add_box_rounded),
                 label: 'Pesan',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.location_on_outlined),
-                activeIcon: Icon(Icons.location_on_rounded),
-                label: 'Tracking',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.person_outline_rounded),

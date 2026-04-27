@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../app_theme.dart';
+import 'tracking_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(int)? onChangeTab;
@@ -29,6 +30,102 @@ class _DashboardScreenState extends State<DashboardScreen>
       curve: Curves.easeOut,
     );
     _fadeController.forward();
+  }
+
+  void _showTrackingDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Lacak Pesanan'),
+        contentPadding: const EdgeInsets.fromLTRB(0, 16, 0, 0),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: FutureBuilder<List<dynamic>>(
+            future: ApiService.getPesanan(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const SizedBox(
+                  height: 100,
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              if (snapshot.hasError) {
+                return const Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: Text('Gagal memuat pesanan', textAlign: TextAlign.center),
+                );
+              }
+
+              final orders = snapshot.data ?? [];
+              // Filter pesanan yang aktif (bukan selesai / dibatalkan)
+              final activeOrders = orders.where((p) {
+                final status = p['status']?.toString().toUpperCase() ?? '';
+                return status != 'SELESAI' && status != 'DIBATALKAN';
+              }).toList();
+
+              if (activeOrders.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Text(
+                    'Tidak ada pesanan yang sedang berlangsung.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: context.textSecondaryColor),
+                  ),
+                );
+              }
+
+              return ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.5,
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: activeOrders.length,
+                  separatorBuilder: (context, index) => Divider(height: 1, color: context.borderColor),
+                  itemBuilder: (context, index) {
+                    final order = activeOrders[index];
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.info.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.location_on_rounded, color: AppColors.info),
+                      ),
+                      title: Text(
+                        order['resi'] ?? '-',
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                      ),
+                      subtitle: Text(
+                        order['jenis_barang'] ?? '',
+                        style: TextStyle(fontSize: 12, color: context.textSecondaryColor),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context); // Tutup dialog
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TrackingScreen(resi: order['resi']),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Tutup'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -179,9 +276,9 @@ class _DashboardScreenState extends State<DashboardScreen>
               _ActionTile(
                 icon: Icons.location_on_outlined,
                 label: 'Lacak Pesanan',
-                subtitle: 'Lihat status pengiriman',
+                subtitle: 'Lacak lokasi pengiriman dengan resi',
                 iconColor: AppColors.info,
-                onTap: () => widget.onChangeTab?.call(3),
+                onTap: () => _showTrackingDialog(context),
               ),
               const SizedBox(height: 10),
               _ActionTile(
