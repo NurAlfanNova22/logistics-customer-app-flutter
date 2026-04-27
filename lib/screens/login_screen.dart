@@ -68,9 +68,9 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
+      body: Container(
+
+
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,

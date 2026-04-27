@@ -205,9 +205,9 @@ class _DashboardScreenState extends State<DashboardScreen>
 class _NotifButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeInOut,
+    return Container(
+
+
       width: 40,
       height: 40,
       decoration: BoxDecoration(
@@ -242,9 +242,9 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
+      child: Container(
+
+
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: context.surfaceColor,
@@ -321,9 +321,9 @@ class _ActionTileState extends State<_ActionTile> {
       child: AnimatedScale(
         scale: _pressed ? 0.97 : 1.0,
         duration: const Duration(milliseconds: 100),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
+        child: Container(
+
+
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             color: _pressed ? context.surface2Color : context.surfaceColor,

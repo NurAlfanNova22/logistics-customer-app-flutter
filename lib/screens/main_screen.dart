@@ -66,9 +66,9 @@ class _MainScreenState extends State<MainScreen> {
       },
       child: Scaffold(
         body: _pages[_currentIndex],
-        bottomNavigationBar: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
+        bottomNavigationBar: Container(
+
+
           decoration: BoxDecoration(
             color: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
             border: Border(top: BorderSide(color: context.borderColor, width: 0.5)),

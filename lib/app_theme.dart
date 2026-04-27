@@ -254,18 +254,11 @@ class AppTheme {
 extension AppColorsContext on BuildContext {
   bool get isDark => Theme.of(this).brightness == Brightness.dark;
 
-  Color get bgColor =>
-      isDark ? AppColors.darkBg : AppColors.lightBg;
-  Color get surfaceColor =>
-      isDark ? AppColors.darkSurface : AppColors.lightSurface;
-  Color get surface2Color =>
-      isDark ? AppColors.darkSurface2 : AppColors.lightSurface2;
-  Color get borderColor =>
-      isDark ? AppColors.darkBorder : AppColors.lightBorder;
-  Color get textPrimaryColor =>
-      isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
-  Color get textSecondaryColor =>
-      isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
-  Color get textMutedColor =>
-      isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted;
+  Color get bgColor => Theme.of(this).scaffoldBackgroundColor;
+  Color get surfaceColor => Theme.of(this).colorScheme.surface;
+  Color get surface2Color => Theme.of(this).colorScheme.surfaceContainerHighest;
+  Color get borderColor => Theme.of(this).colorScheme.outline;
+  Color get textPrimaryColor => Theme.of(this).colorScheme.onSurface;
+  Color get textSecondaryColor => Theme.of(this).colorScheme.onSurfaceVariant;
+  Color get textMutedColor => Theme.of(this).textTheme.labelSmall?.color ?? (isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted);
 }

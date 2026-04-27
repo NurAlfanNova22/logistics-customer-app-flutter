@@ -300,9 +300,9 @@ class _OrderCardState extends State<_OrderCard> {
       child: AnimatedScale(
         scale: _pressed ? 0.98 : 1.0,
         duration: const Duration(milliseconds: 100),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
+        child: Container(
+
+
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -420,9 +420,9 @@ class _OrderCardState extends State<_OrderCard> {
         text = 'MENUNGGU';
     }
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeInOut,
+    return Container(
+
+
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: bgColor,
