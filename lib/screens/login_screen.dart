@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'main_screen.dart';
 import 'register_screen.dart';
+import 'forgot_password_screen.dart';
 import '../services/auth_service.dart';
 import '../app_theme.dart';
 
@@ -194,7 +195,26 @@ class _LoginScreenState extends State<LoginScreen>
                       ),
                     ),
 
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 14),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => ForgotPasswordScreen()),
+                            );
+                          },
+                          child: const Text(
+                            'Lupa Password?',
+                            style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 18),
 
                     // Login button
                     SizedBox(
