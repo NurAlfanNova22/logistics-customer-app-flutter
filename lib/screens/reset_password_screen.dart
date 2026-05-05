@@ -5,7 +5,7 @@ class ResetPasswordScreen extends StatefulWidget {
   final String email;
   final String otp;
 
-  ResetPasswordScreen({required this.email, required this.otp});
+  const ResetPasswordScreen({super.key, required this.email, required this.otp});
 
   @override
   _ResetPasswordScreenState createState() => _ResetPasswordScreenState();
@@ -99,13 +99,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               height: 50,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _handleResetPassword,
-                child: _isLoading 
-                  ? CircularProgressIndicator(color: Colors.white) 
-                  : Text("Simpan Password Baru"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange[800],
                   foregroundColor: Colors.white,
                 ),
+                child: _isLoading 
+                  ? CircularProgressIndicator(color: Colors.white) 
+                  : Text("Simpan Password Baru"),
               ),
             ),
           ],

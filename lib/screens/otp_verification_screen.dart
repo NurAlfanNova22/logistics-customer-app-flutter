@@ -4,7 +4,7 @@ import 'reset_password_screen.dart';
 class OtpVerificationScreen extends StatefulWidget {
   final String email;
 
-  OtpVerificationScreen({required this.email});
+  const OtpVerificationScreen({super.key, required this.email});
 
   @override
   _OtpVerificationScreenState createState() => _OtpVerificationScreenState();
@@ -70,11 +70,11 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               height: 50,
               child: ElevatedButton(
                 onPressed: _verifyOtp,
-                child: Text("Verifikasi Kode"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange[800],
                   foregroundColor: Colors.white,
                 ),
+                child: Text("Verifikasi Kode"),
               ),
             ),
           ],

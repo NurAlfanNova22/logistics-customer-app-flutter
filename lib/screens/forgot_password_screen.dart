@@ -3,6 +3,8 @@ import '../services/auth_service.dart';
 import 'otp_verification_screen.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
+  const ForgotPasswordScreen({super.key});
+
   @override
   _ForgotPasswordScreenState createState() => _ForgotPasswordScreenState();
 }
@@ -76,13 +78,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               height: 50,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _handleForgotPassword,
-                child: _isLoading 
-                  ? CircularProgressIndicator(color: Colors.white) 
-                  : Text("Kirim Kode OTP"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange[800],
                   foregroundColor: Colors.white,
                 ),
+                child: _isLoading 
+                  ? CircularProgressIndicator(color: Colors.white) 
+                  : Text("Kirim Kode OTP"),
               ),
             ),
           ],
