@@ -14,15 +14,82 @@ class MapPickerScreen extends StatefulWidget {
 }
 
 class _MapPickerScreenState extends State<MapPickerScreen> {
-  late GoogleMapController _mapController;
+  GoogleMapController? _mapController;
   
   LatLng _currentCenter = const LatLng(-8.0983, 112.1609);
   bool _isLoading = false;
+  bool _isMapInitializing = true;
   bool _isSearching = false;
   
   List<dynamic> _searchResults = [];
   Timer? _debounce;
   final TextEditingController _searchController = TextEditingController();
+  
+  @override
+  void initState() {
+    super.initState();
+    _determineInitialPosition();
+  }
+
+  Future<void> _determineInitialPosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // 1. Cek Service
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      if (mounted) setState(() => _isMapInitializing = false);
+      return;
+    }
+
+    // 2. Cek Izin
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        if (mounted) setState(() => _isMapInitializing = false);
+        return;
+      }
+    }
+    
+    if (permission == LocationPermission.deniedForever) {
+      if (mounted) setState(() => _isMapInitializing = false);
+      return;
+    }
+
+    try {
+        // 3. Coba ambil lokasi terakhir yang diketahui (Sangat Cepat)
+        final lastPosition = await Geolocator.getLastKnownPosition();
+        if (lastPosition != null) {
+          if (mounted) {
+            setState(() {
+              _currentCenter = LatLng(lastPosition.latitude, lastPosition.longitude);
+              _isMapInitializing = false;
+            });
+          }
+        }
+
+        // 4. Ambil lokasi akurat terbaru (Latar Belakang)
+        final position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 5),
+        );
+        
+        if (mounted) {
+          setState(() {
+            _currentCenter = LatLng(position.latitude, position.longitude);
+            _isMapInitializing = false;
+          });
+          
+          _mapController?.animateCamera(
+            CameraUpdate.newLatLngZoom(_currentCenter, 16)
+          );
+        }
+    } catch (e) {
+        debugPrint("Gagal mengambil lokasi awal: $e");
+        if (mounted) setState(() => _isMapInitializing = false);
+    }
+  }
 
   void _onCameraMove(CameraPosition position) {
     _currentCenter = position.target;
@@ -70,7 +137,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
         final loc = _searchResults.first;
         final lat = double.parse(loc['lat']);
         final lon = double.parse(loc['lon']);
-        _mapController.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat, lon), 16));
+        _mapController?.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat, lon), 16));
         setState(() => _searchResults = []);
      }
   }
@@ -102,7 +169,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
     if (mounted) setState(() => _isLoading = true);
     try {
         final position = await Geolocator.getCurrentPosition();
-        _mapController.animateCamera(CameraUpdate.newLatLngZoom(LatLng(position.latitude, position.longitude), 16));
+        _mapController?.animateCamera(CameraUpdate.newLatLngZoom(LatLng(position.latitude, position.longitude), 16));
     } catch (e) {
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal mengambil lokasi saat ini.')));
     } finally {
@@ -151,19 +218,30 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
         foregroundColor: Colors.black87,
         elevation: 1,
       ),
-      body: Stack(
-        children: [
-          GoogleMap(
-            initialCameraPosition: CameraPosition(
-              target: _currentCenter,
-              zoom: 15,
-            ),
-            onMapCreated: (controller) => _mapController = controller,
-            onCameraMove: _onCameraMove,
-            myLocationEnabled: true,
-            myLocationButtonEnabled: false,
-            zoomControlsEnabled: false,
+      body: _isMapInitializing 
+      ? Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(color: AppColors.primary),
+              const SizedBox(height: 16),
+              Text('Menyiapkan Peta...', style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+            ],
           ),
+        )
+      : Stack(
+          children: [
+            GoogleMap(
+              initialCameraPosition: CameraPosition(
+                target: _currentCenter,
+                zoom: 15,
+              ),
+              onMapCreated: (controller) => _mapController = controller,
+              onCameraMove: _onCameraMove,
+              myLocationEnabled: true,
+              myLocationButtonEnabled: false,
+              zoomControlsEnabled: false,
+            ),
           
           // Fixed Pin in the center
           const Center(
@@ -268,7 +346,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                             _searchController.text = item['name'] ?? item['display_name'] ?? '';
                          });
                          
-                         _mapController.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat, lon), 16));
+                         _mapController?.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat, lon), 16));
                       },
                     );
                   },
