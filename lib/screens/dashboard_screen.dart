@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../app_theme.dart';
 import 'tracking_screen.dart';
+import 'notification_screen.dart';
+import '../services/notification_service.dart';
+import '../services/auth_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(int)? onChangeTab;
@@ -16,11 +19,15 @@ class _DashboardScreenState extends State<DashboardScreen>
   late Future<Map<String, dynamic>> futureDashboard;
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
+  int _unreadCount = 0;
 
   @override
   void initState() {
     super.initState();
     futureDashboard = ApiService.getDashboard();
+    _fetchUnreadCount();
+    _initRealtimeNotifications();
+    
     _fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -30,6 +37,26 @@ class _DashboardScreenState extends State<DashboardScreen>
       curve: Curves.easeOut,
     );
     _fadeController.forward();
+  }
+
+  Future<void> _initRealtimeNotifications() async {
+    final profile = await AuthService.getProfile();
+    if (profile != null && profile['id'] != null) {
+      NotificationService.listenToRealtimeNotifications(profile['id']);
+    }
+  }
+
+  Future<void> _fetchUnreadCount() async {
+    try {
+      final notifs = await ApiService.getNotifications();
+      if (mounted) {
+        setState(() {
+          _unreadCount = notifs.where((n) => n['is_read'] == false).length;
+        });
+      }
+    } catch (e) {
+      print('Error fetching unread: $e');
+    }
   }
 
   void _showTrackingDialog(BuildContext context) {
@@ -201,7 +228,16 @@ class _DashboardScreenState extends State<DashboardScreen>
                         ),
                       ],
                     ),
-                    _NotifButton(),
+                    _NotifButton(
+                      unreadCount: _unreadCount,
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const NotificationScreen()),
+                        );
+                        _fetchUnreadCount();
+                      },
+                    ),
                   ],
                 ),
 
@@ -300,22 +336,65 @@ class _DashboardScreenState extends State<DashboardScreen>
 // ─── Notif Button ─────────────────────────────────────────────────────────────
 
 class _NotifButton extends StatelessWidget {
+  final int unreadCount;
+  final VoidCallback onTap;
+
+  const _NotifButton({required this.unreadCount, required this.onTap});
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-
-
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: context.surfaceColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: context.borderColor),
-      ),
-      child: Icon(
-        Icons.notifications_none_rounded,
-        size: 20,
-        color: context.textSecondaryColor,
+    return GestureDetector(
+      onTap: onTap,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: context.surfaceColor,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: context.borderColor),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(
+              Icons.notifications_none_rounded,
+              size: 22,
+              color: context.textPrimaryColor,
+            ),
+          ),
+          if (unreadCount > 0)
+            Positioned(
+              top: -2,
+              right: -2,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                constraints: const BoxConstraints(
+                  minWidth: 18,
+                  minHeight: 18,
+                ),
+                child: Text(
+                  unreadCount > 9 ? '9+' : unreadCount.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

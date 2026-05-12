@@ -128,4 +128,76 @@ class ApiService {
       return null;
     }
   }
+  // GET list notifikasi
+  static Future<List<dynamic>> getNotifications() async {
+    final token = await AuthService.getToken();
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/notifications'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // POST tandai sudah dibaca
+  static Future<bool> markNotificationAsRead(int id) async {
+    final token = await AuthService.getToken();
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/notifications/$id/read'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // POST tandai semua sudah dibaca
+  static Future<bool> markAllNotificationsAsRead() async {
+    final token = await AuthService.getToken();
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/notifications/read-all'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // POST update FCM token
+  static Future<bool> updateFcmToken(String fcmToken) async {
+    final token = await AuthService.getToken();
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/user/update-fcm'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({'fcm_token': fcmToken}),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
 }

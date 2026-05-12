@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_screen.dart';
 import 'services/auth_service.dart';
+import 'services/notification_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
@@ -14,6 +15,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  await NotificationService.init();
   runApp(const MyApp());
 }
 
@@ -32,6 +34,7 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     // Kunci future agar tidak dijalankan ulang saat tema berubah
     _authFuture = AuthService.getToken();
+    NotificationService.requestPermissions();
   }
 
   @override
