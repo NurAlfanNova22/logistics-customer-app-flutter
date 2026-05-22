@@ -41,6 +41,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Future<void> _initRealtimeNotifications() async {
     final profile = await AuthService.getProfile();
+    print("👤 [DEBUG] Profile Data: $profile");
     if (profile != null && profile['id'] != null) {
       NotificationService.listenToRealtimeNotifications(profile['id']);
     }

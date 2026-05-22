@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../app_theme.dart';
 import 'map_picker_screen.dart';
+import '../services/notification_service.dart';
 
 class OrderFormScreen extends StatefulWidget {
   final Function(int)? onOrderSuccess;
@@ -89,6 +90,13 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
     if (result != null) {
       final resi = result['resi'];
       if (!mounted) return;
+      
+      // Munculkan notifikasi instan di HP
+      NotificationService.showNotification(
+        title: 'Pesanan Berhasil Dibuat ✅',
+        body: 'Pesanan Anda (Resi: ${result['resi']}) sedang menunggu konfirmasi.',
+        payload: 'order_created',
+      );
       showDialog(
         context: context,
         builder: (_) => AlertDialog(

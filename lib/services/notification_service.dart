@@ -6,24 +6,26 @@ import '../services/api_service.dart';
 import 'dart:io';
 
 class NotificationService {
-  static dynamic _notificationsPlugin = FlutterLocalNotificationsPlugin();
+  static final FlutterLocalNotificationsPlugin _notificationsPlugin =
+      FlutterLocalNotificationsPlugin();
   static final _firebaseMessaging = FirebaseMessaging.instance;
   static final _database = FirebaseDatabase.instance;
 
   static Future<void> init() async {
-    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidInit = AndroidInitializationSettings('ic_launcher_foreground');
     const iosInit = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
       requestSoundPermission: false,
     );
 
-    const initSettings = InitializationSettings(android: androidInit, iOS: iosInit);
+    final InitializationSettings initSettings =
+        InitializationSettings(android: androidInit, iOS: iosInit);
 
     try {
       await _notificationsPlugin.initialize(
-        initSettings,
-        onDidReceiveNotificationResponse: (NotificationResponse response) {
+        settings: initSettings,
+        onDidReceiveNotificationResponse: (details) {
           // Klik notifikasi
         },
       );
@@ -34,8 +36,8 @@ class NotificationService {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (message.notification != null) {
         showNotification(
-          title: message.notification!.title,
-          body: message.notification!.body,
+          title: message.notification!.title ?? 'Lancar Ekspedisi',
+          body: message.notification!.body ?? '',
         );
       }
     });
@@ -54,19 +56,12 @@ class NotificationService {
       print("📩 [DEBUG] Ada data masuk ke path $path: $data");
       
       if (data != null) {
-        print("📩 Data Notifikasi Diterima: ${data['title']}");
-        
-        int timestamp = data['timestamp'] ?? 0;
-        int now = DateTime.now().millisecondsSinceEpoch;
-        
-        // Toleransi 30 detik untuk memastikan notifikasi muncul saat HP baru aktif
-        if ((now - timestamp).abs() < 30000) {
-          showNotification(
-            title: data['title'] ?? 'Lancar Ekspedisi',
-            body: data['body'] ?? '',
-            payload: data['type'],
-          );
-        }
+        // Tampilkan notifikasi tanpa filter waktu untuk testing
+        showNotification(
+          title: data['title'] ?? 'Lancar Ekspedisi',
+          body: data['body'] ?? '',
+          payload: data['type'],
+        );
       }
     }, onError: (error) {
       print("❌ Firebase Listener Error: $error");
@@ -95,35 +90,33 @@ class NotificationService {
   }
 
   static Future<void> showNotification({
-    int id = 0,
-    String? title,
-    String? body,
+    required String title,
+    required String body,
     String? payload,
   }) async {
     try {
-      const androidDetails = AndroidNotificationDetails(
+      const AndroidNotificationDetails androidPlatformChannelSpecifics =
+          AndroidNotificationDetails(
         'lancar_ekspedisi_channel',
-        'Notifikasi Ekspedisi',
+        'Lancar Ekspedisi Notifications',
         importance: Importance.max,
         priority: Priority.high,
-        playSound: true,
-        enableVibration: true,
+        showWhen: true,
+        icon: 'ic_launcher_foreground',
       );
 
-      const notificationDetails = NotificationDetails(
-        android: androidDetails,
-        iOS: DarwinNotificationDetails(presentAlert: true, presentSound: true),
-      );
+      const NotificationDetails platformChannelSpecifics =
+          NotificationDetails(android: androidPlatformChannelSpecifics);
 
       await _notificationsPlugin.show(
-        id,
-        title,
-        body,
-        notificationDetails,
+        id: 0,
+        title: title,
+        body: body,
+        notificationDetails: platformChannelSpecifics,
         payload: payload,
       );
     } catch (e) {
-      print('Error showing notification: $e');
+      print("❌ Error showing notification: $e");
     }
   }
 }
