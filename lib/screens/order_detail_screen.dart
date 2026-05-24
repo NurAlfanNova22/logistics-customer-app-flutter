@@ -203,6 +203,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final statusPembayaran = (_currentPesanan['status_pembayaran'] ?? 'BELUM DIBAYAR').toString().toUpperCase();
     final totalBiaya = _currentPesanan['total_biaya'] ?? 0;
 
+    final isShipped = statusPengiriman == 'pesanan telah dikirim';
+    final isPaid = statusPembayaran == 'SUDAH DIBAYAR';
+    final isCancelled = status == 'dibatalkan';
+
     final isCompleted = status == 'selesai';
     final isTrackingAvailable = statusPengiriman == 'dalam perjalanan';
     final canBeCancelled = status != 'dibatalkan' && status != 'selesai' && statusPengiriman != 'dalam perjalanan' && statusPengiriman != 'pesanan telah dikirim';
