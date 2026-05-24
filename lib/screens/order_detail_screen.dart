@@ -52,26 +52,98 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
-  Future<void> _selesaikanPesanan() async {
-    setState(() => isLoading = true);
-    try {
-      final success =
-          await ApiService.selesaikanPesanan(_currentPesanan['id']);
-      if (!mounted) return;
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Pesanan berhasil diselesaikan')));
-        Navigator.pop(context, true);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Gagal menyelesaikan pesanan')));
-        setState(() => isLoading = false);
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-      setState(() => isLoading = false);
-    }
+  void _showRatingDialog() {
+    int selectedStars = 5;
+    final reviewController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: const Center(
+                child: Text(
+                  'Beri Penilaian',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Bagaimana pengalaman pengiriman Anda?',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 13, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      final starValue = index + 1;
+                      return IconButton(
+                        icon: Icon(
+                          Icons.star_rounded,
+                          size: 36,
+                          color: starValue <= selectedStars ? Colors.amber : Colors.grey.shade300,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            selectedStars = starValue;
+                          });
+                        },
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: reviewController,
+                    maxLines: 3,
+                    style: const TextStyle(fontSize: 13),
+                    decoration: InputDecoration(
+                      hintText: 'Tulis ulasan Anda di sini (opsional)...',
+                      hintStyle: const TextStyle(fontSize: 12, color: Colors.grey),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.primary),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(this.context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Terima kasih! Penilaian Anda berhasil dikirim.'),
+                        backgroundColor: AppColors.success,
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const Text('Kirim', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _batalkanPesanan() async {
@@ -131,11 +203,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final statusPembayaran = (_currentPesanan['status_pembayaran'] ?? 'BELUM DIBAYAR').toString().toUpperCase();
     final totalBiaya = _currentPesanan['total_biaya'] ?? 0;
 
-    final isShipped = statusPengiriman == 'pesanan telah dikirim';
-    final isPaid = statusPembayaran == 'SUDAH DIBAYAR';
-    final isCancelled = status == 'dibatalkan';
-    
-    final canBeCompleted = status != 'selesai' && isShipped && (totalBiaya == 0 || isPaid);
+    final isCompleted = status == 'selesai';
     final isTrackingAvailable = statusPengiriman == 'dalam perjalanan';
     final canBeCancelled = status != 'dibatalkan' && status != 'selesai' && statusPengiriman != 'dalam perjalanan' && statusPengiriman != 'pesanan telah dikirim';
 
@@ -232,20 +300,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               ],
             ),
             const SizedBox(height: 20),
-            if (canBeCompleted)
+            if (isCompleted)
               SizedBox(
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton.icon(
-                  onPressed: isLoading ? null : _selesaikanPesanan,
-                  icon: isLoading
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                        )
-                      : const Icon(Icons.check_circle_rounded),
-                  label: const Text('Pesanan Telah Diterima',
+                  onPressed: _showRatingDialog,
+                  icon: const Icon(Icons.star_rounded, color: Colors.amber),
+                  label: const Text('Beri Penilaian',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
@@ -257,7 +319,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               ),
             
             if (canBeCancelled) ...[
-              if (canBeCompleted) const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 height: 52,
