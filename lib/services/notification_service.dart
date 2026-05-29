@@ -49,14 +49,18 @@ class NotificationService {
     String path = 'notifications_customer/$uid';
     print("🔔 [DEBUG] Monitoring Firebase Path: $path");
     
-    DatabaseReference ref = _database.ref(path);
+    final startTime = DateTime.now().millisecondsSinceEpoch;
     
-    ref.onChildAdded.listen((DatabaseEvent event) {
+    _database
+        .ref(path)
+        .orderByChild('timestamp')
+        .startAt(startTime)
+        .onChildAdded
+        .listen((DatabaseEvent event) {
       final data = event.snapshot.value as Map?;
       print("📩 [DEBUG] Ada data masuk ke path $path: $data");
       
       if (data != null) {
-        // Tampilkan notifikasi tanpa filter waktu untuk testing
         showNotification(
           title: data['title'] ?? 'Lancar Ekspedisi',
           body: data['body'] ?? '',
