@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'order_detail_screen.dart';
 import 'order_status_screen.dart';
+import 'penilaian_saya_screen.dart';
 import '../app_theme.dart';
 
 class OrderListScreen extends StatefulWidget {
@@ -72,12 +73,21 @@ class _OrderListScreenState extends State<OrderListScreen> {
                     dikirim: dikirim,
                     penilaian: penilaian,
                     onItemTap: (index) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => OrderStatusScreen(initialTabIndex: index),
-                        ),
-                      ).then((_) => _loadData());
+                      if (index == 4) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const PenilaianSayaScreen(),
+                          ),
+                        ).then((_) => _loadData());
+                      } else {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => OrderStatusScreen(initialTabIndex: index),
+                          ),
+                        ).then((_) => _loadData());
+                      }
                     },
                   ),
                   const SizedBox(height: 24),

@@ -50,8 +50,6 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
         return statusPengiriman == 'DALAM PERJALANAN';
       } else if (type == 'Selesai') {
         return status == 'SELESAI';
-      } else if (type == 'Penilaian') {
-        return status == 'SELESAI';
       }
       return false;
     }).toList();
@@ -60,8 +58,8 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      initialIndex: widget.initialTabIndex,
-      length: 5,
+      initialIndex: widget.initialTabIndex >= 4 ? 3 : widget.initialTabIndex,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Pesanan Saya'),
@@ -76,7 +74,6 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
               Tab(text: 'Sopir Mengambil'),
               Tab(text: 'Dikirim'),
               Tab(text: 'Selesai'),
-              Tab(text: 'Penilaian'),
             ],
           ),
         ),
@@ -88,7 +85,6 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
                   _OrderListTab(orders: _filterOrders('Sopir Mengambil'), onRefresh: _loadData),
                   _OrderListTab(orders: _filterOrders('Dikirim'), onRefresh: _loadData),
                   _OrderListTab(orders: _filterOrders('Selesai'), onRefresh: _loadData),
-                  _OrderListTab(orders: _filterOrders('Penilaian'), onRefresh: _loadData),
                 ],
               ),
       ),
