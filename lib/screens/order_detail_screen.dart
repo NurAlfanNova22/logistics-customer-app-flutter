@@ -19,6 +19,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   late Map<String, dynamic> _currentPesanan;
   Map<String, dynamic>? _trackingData;
   bool _isAlreadyRated = false;
+  int _savedStars = 5;
+  String _savedReview = '';
 
   @override
   void initState() {
@@ -46,15 +48,24 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final orderId = _currentPesanan['id'];
     if (userId != null && orderId != null) {
       final List<String> ratedList = prefs.getStringList('rated_orders_$userId') ?? [];
+      final isRated = ratedList.contains(orderId.toString());
+      int stars = 5;
+      String review = '';
+      if (isRated) {
+        stars = prefs.getInt('rating_stars_${userId}_$orderId') ?? 5;
+        review = prefs.getString('rating_review_${userId}_$orderId') ?? '';
+      }
       if (mounted) {
         setState(() {
-          _isAlreadyRated = ratedList.contains(orderId.toString());
+          _isAlreadyRated = isRated;
+          _savedStars = stars;
+          _savedReview = review;
         });
       }
     }
   }
 
-  Future<void> _saveAsRated() async {
+  Future<void> _saveAsRated(int stars, String review) async {
     final prefs = await SharedPreferences.getInstance();
     final userId = _currentPesanan['user_id'];
     final orderId = _currentPesanan['id'];
@@ -64,9 +75,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         ratedList.add(orderId.toString());
         await prefs.setStringList('rated_orders_$userId', ratedList);
       }
+      await prefs.setInt('rating_stars_${userId}_$orderId', stars);
+      await prefs.setString('rating_review_${userId}_$orderId', review);
       if (mounted) {
         setState(() {
           _isAlreadyRated = true;
+          _savedStars = stars;
+          _savedReview = review;
         });
       }
     }
@@ -158,7 +173,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    _saveAsRated();
+                    _saveAsRated(selectedStars, reviewController.text);
                     ScaffoldMessenger.of(this.context).showSnackBar(
                       const SnackBar(
                         content: Text('Terima kasih! Penilaian Anda berhasil dikirim.'),
@@ -342,27 +357,59 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               _isAlreadyRated
                   ? Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: AppColors.successSurface,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.success.withOpacity(0.3)),
+                        border: Border.all(color: AppColors.success.withOpacity(0.2)),
                       ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.stars_rounded, color: AppColors.success, size: 24),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Sudah Dinilai. Terima kasih atas ulasan Anda! ⭐',
+                          Row(
+                            children: [
+                              const Icon(Icons.stars_rounded, color: AppColors.success, size: 24),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Penilaian Anda',
+                                style: TextStyle(
+                                  color: AppColors.success,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const Spacer(),
+                              Row(
+                                children: List.generate(5, (index) {
+                                  return Icon(
+                                    Icons.star_rounded,
+                                    size: 18,
+                                    color: index < _savedStars ? Colors.amber : Colors.grey.shade300,
+                                  );
+                                }),
+                              ),
+                            ],
+                          ),
+                          if (_savedReview.trim().isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Ulasan:',
                               style: TextStyle(
-                                color: AppColors.success,
-                                fontSize: 14,
+                                fontSize: 12,
                                 fontWeight: FontWeight.bold,
+                                color: Colors.grey,
                               ),
                             ),
-                          ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _savedReview,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: context.textPrimaryColor,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     )
