@@ -4,6 +4,7 @@ import '../app_theme.dart';
 import 'tracking_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   final Map<String, dynamic> pesanan;
@@ -17,12 +18,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   bool isLoading = false;
   late Map<String, dynamic> _currentPesanan;
   Map<String, dynamic>? _trackingData;
+  bool _isAlreadyRated = false;
 
   @override
   void initState() {
     super.initState();
     _currentPesanan = Map<String, dynamic>.from(widget.pesanan);
     _fetchTrackingProgress();
+    _checkIfRated();
   }
 
   Future<void> _fetchTrackingProgress() async {
@@ -37,7 +40,37 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       });
     }
   }
+  Future<void> _checkIfRated() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = _currentPesanan['user_id'];
+    final orderId = _currentPesanan['id'];
+    if (userId != null && orderId != null) {
+      final List<String> ratedList = prefs.getStringList('rated_orders_$userId') ?? [];
+      if (mounted) {
+        setState(() {
+          _isAlreadyRated = ratedList.contains(orderId.toString());
+        });
+      }
+    }
+  }
 
+  Future<void> _saveAsRated() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = _currentPesanan['user_id'];
+    final orderId = _currentPesanan['id'];
+    if (userId != null && orderId != null) {
+      final List<String> ratedList = prefs.getStringList('rated_orders_$userId') ?? [];
+      if (!ratedList.contains(orderId.toString())) {
+        ratedList.add(orderId.toString());
+        await prefs.setStringList('rated_orders_$userId', ratedList);
+      }
+      if (mounted) {
+        setState(() {
+          _isAlreadyRated = true;
+        });
+      }
+    }
+  }
   Future<void> _bayarSekarang() async {
     final urlStr = _currentPesanan['payment_url'];
     if (urlStr != null && urlStr.isNotEmpty) {
@@ -125,6 +158,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context);
+                    _saveAsRated();
                     ScaffoldMessenger.of(this.context).showSnackBar(
                       const SnackBar(
                         content: Text('Terima kasih! Penilaian Anda berhasil dikirim.'),
@@ -305,22 +339,49 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             ),
             const SizedBox(height: 20),
             if (isCompleted)
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton.icon(
-                  onPressed: _showRatingDialog,
-                  icon: const Icon(Icons.star_rounded, color: Colors.amber),
-                  label: const Text('Beri Penilaian',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    elevation: 4,
-                    shadowColor: AppColors.primary.withOpacity(0.4),
-                  ),
-                ),
-              ),
+              _isAlreadyRated
+                  ? Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                      decoration: BoxDecoration(
+                        color: AppColors.successSurface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.success.withOpacity(0.3)),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.stars_rounded, color: AppColors.success, size: 24),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Sudah Dinilai. Terima kasih atas ulasan Anda! ⭐',
+                              style: TextStyle(
+                                color: AppColors.success,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton.icon(
+                        onPressed: _showRatingDialog,
+                        icon: const Icon(Icons.star_rounded, color: Colors.amber),
+                        label: const Text('Beri Penilaian',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          elevation: 4,
+                          shadowColor: AppColors.primary.withOpacity(0.4),
+                        ),
+                      ),
+                    ),
             
             if (canBeCancelled) ...[
               SizedBox(

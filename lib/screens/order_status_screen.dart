@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../app_theme.dart';
 import 'order_detail_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OrderStatusScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -154,6 +155,28 @@ class OrderCard extends StatefulWidget {
 
 class _OrderCardState extends State<OrderCard> {
   bool _pressed = false;
+  bool _isAlreadyRated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkIfRated();
+  }
+
+  Future<void> _checkIfRated() async {
+    final prefs = await SharedPreferences.getInstance();
+    final p = widget.pesanan;
+    final userId = p['user_id'];
+    final orderId = p['id'];
+    if (userId != null && orderId != null) {
+      final List<String> ratedList = prefs.getStringList('rated_orders_$userId') ?? [];
+      if (mounted) {
+        setState(() {
+          _isAlreadyRated = ratedList.contains(orderId.toString());
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -267,9 +290,15 @@ class _OrderCardState extends State<OrderCard> {
         text = 'DIKIRIM';
         break;
       case 'selesai':
-        bgColor = AppColors.successSurface;
-        textColor = AppColors.success;
-        text = 'SELESAI';
+        if (_isAlreadyRated) {
+          bgColor = AppColors.successSurface;
+          textColor = AppColors.success;
+          text = 'SUDAH DINILAI';
+        } else {
+          bgColor = AppColors.primarySurface;
+          textColor = AppColors.primary;
+          text = 'BELUM DINILAI';
+        }
         break;
       case 'dibatalkan':
         bgColor = Colors.red.shade50;
