@@ -43,8 +43,11 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
     return _allOrders.where((p) {
       final status = p['status']?.toString().toUpperCase();
       final statusPengiriman = p['status_pengiriman']?.toString().toUpperCase();
+      final paymentStatus = (p['status_pembayaran'] ?? 'BELUM DIBAYAR').toString().toUpperCase();
 
-      if (type == 'Sopir Mengambil') {
+      if (type == 'Belum Bayar') {
+        return paymentStatus == 'BELUM DIBAYAR' && status != 'DIBATALKAN';
+      } else if (type == 'Sopir Mengambil') {
         return (status == 'MENUNGGU' || status == 'PROSES' || status == 'DIPROSES');
       } else if (type == 'Dikirim') {
         return statusPengiriman == 'DALAM PERJALANAN';
@@ -58,8 +61,8 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      initialIndex: widget.initialTabIndex >= 4 ? 3 : widget.initialTabIndex,
-      length: 4,
+      initialIndex: widget.initialTabIndex >= 5 ? 4 : widget.initialTabIndex,
+      length: 5,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Pesanan Saya'),
@@ -71,6 +74,7 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
             unselectedLabelColor: Colors.grey,
             tabs: [
               Tab(text: 'Semua'),
+              Tab(text: 'Belum Bayar'),
               Tab(text: 'Sopir Mengambil'),
               Tab(text: 'Dikirim'),
               Tab(text: 'Selesai'),
@@ -82,6 +86,7 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
             : TabBarView(
                 children: [
                   _OrderListTab(orders: _filterOrders('Semua'), onRefresh: _loadData),
+                  _OrderListTab(orders: _filterOrders('Belum Bayar'), onRefresh: _loadData),
                   _OrderListTab(orders: _filterOrders('Sopir Mengambil'), onRefresh: _loadData),
                   _OrderListTab(orders: _filterOrders('Dikirim'), onRefresh: _loadData),
                   _OrderListTab(orders: _filterOrders('Selesai'), onRefresh: _loadData),

@@ -39,6 +39,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
   @override
   Widget build(BuildContext context) {
     // Menghitung jumlah berdasarkan status dari data _orders
+    int belumBayar = 0;
     int sopirMengambil = 0;
     int dikirim = 0;
     int penilaian = 0;
@@ -46,6 +47,11 @@ class _OrderListScreenState extends State<OrderListScreen> {
     for (var p in _orders) {
       final status = p['status']?.toString().toUpperCase();
       final statusPengiriman = p['status_pengiriman']?.toString().toUpperCase();
+      final paymentStatus = (p['status_pembayaran'] ?? 'BELUM DIBAYAR').toString().toUpperCase();
+
+      if (paymentStatus == 'BELUM DIBAYAR' && status != 'DIBATALKAN') {
+        belumBayar++;
+      }
 
       if (status == 'MENUNGGU' || status == 'PROSES' || status == 'DIPROSES') {
         sopirMengambil++;
@@ -69,11 +75,12 @@ class _OrderListScreenState extends State<OrderListScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
                   _OrderSummaryHeader(
+                    belumBayar: belumBayar,
                     sopirMengambil: sopirMengambil,
                     dikirim: dikirim,
                     penilaian: penilaian,
                     onItemTap: (index) {
-                      if (index == 4) {
+                      if (index == 5) {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -128,12 +135,14 @@ class _OrderListScreenState extends State<OrderListScreen> {
 }
 
 class _OrderSummaryHeader extends StatelessWidget {
+  final int belumBayar;
   final int sopirMengambil;
   final int dikirim;
   final int penilaian;
   final Function(int) onItemTap;
 
   const _OrderSummaryHeader({
+    required this.belumBayar,
     required this.sopirMengambil,
     required this.dikirim,
     required this.penilaian,
@@ -182,22 +191,28 @@ class _OrderSummaryHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _StatusItem(
+              icon: Icons.account_balance_wallet_outlined,
+              label: 'Belum\nBayar',
+              count: belumBayar,
+              onTap: () => onItemTap(1),
+            ),
+            _StatusItem(
               icon: Icons.inventory_2_outlined,
               label: 'Sopir mengambil\nbarang',
               count: sopirMengambil,
-              onTap: () => onItemTap(1),
+              onTap: () => onItemTap(2),
             ),
             _StatusItem(
               icon: Icons.local_shipping_outlined,
               label: 'Dikirim',
               count: dikirim,
-              onTap: () => onItemTap(2),
+              onTap: () => onItemTap(3),
             ),
             _StatusItem(
               icon: Icons.stars_outlined,
               label: 'Penilaian',
               count: penilaian,
-              onTap: () => onItemTap(4),
+              onTap: () => onItemTap(5),
             ),
           ],
         ),
