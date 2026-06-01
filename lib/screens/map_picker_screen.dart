@@ -191,7 +191,8 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['display_name'] != null && data['display_name'].toString().isNotEmpty) {
-           if (mounted) Navigator.pop(context, data['display_name']);
+           final resultString = "${data['display_name']} @${_currentCenter.latitude},${_currentCenter.longitude}";
+           if (mounted) Navigator.pop(context, resultString);
            return;
         }
       }

@@ -22,11 +22,23 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
   final beratController = TextEditingController();
 
   bool isLoading = false;
+  String? _alamatAsalRaw;
+  String? _alamatTujuanRaw;
 
   @override
   void initState() {
     super.initState();
-    alamatTujuanController.addListener(() => setState(() {}));
+    alamatAsalController.addListener(() {
+      if (alamatAsalController.text != (_alamatAsalRaw?.split(' @').first ?? '')) {
+        _alamatAsalRaw = null;
+      }
+    });
+    alamatTujuanController.addListener(() {
+      if (alamatTujuanController.text != (_alamatTujuanRaw?.split(' @').first ?? '')) {
+        _alamatTujuanRaw = null;
+      }
+      setState(() {});
+    });
     beratController.addListener(() => setState(() {}));
   }
 
@@ -78,8 +90,8 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
 
     final result = await ApiService.kirimPesanan({
       'nama_pabrik': namaPabrikController.text,
-      'alamat_asal': alamatAsalController.text,
-      'alamat_tujuan': alamatTujuanController.text,
+      'alamat_asal': _alamatAsalRaw ?? alamatAsalController.text,
+      'alamat_tujuan': _alamatTujuanRaw ?? alamatTujuanController.text,
       'jenis_barang': jenisBarangController.text,
       'berat': beratKg,
       'total_biaya': calculatedTotalBiaya,
@@ -355,9 +367,14 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
                      context,
                      MaterialPageRoute(builder: (context) => const MapPickerScreen()),
                    );
-                   if (result != null && result is String) {
-                     controller.text = result;
-                   }
+                    if (result != null && result is String) {
+                      if (label.contains('Asal')) {
+                        _alamatAsalRaw = result;
+                      } else {
+                        _alamatTujuanRaw = result;
+                      }
+                      controller.text = result.split(' @').first;
+                    }
                 },
               )
             : null,
