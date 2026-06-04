@@ -33,6 +33,7 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
       if (alamatAsalController.text != (_alamatAsalRaw?.split(' @').first ?? '')) {
         _alamatAsalRaw = null;
       }
+      setState(() {});
     });
     alamatTujuanController.addListener(() {
       if (alamatTujuanController.text != (_alamatTujuanRaw?.split(' @').first ?? '')) {
@@ -98,24 +99,47 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
       } else if (distance <= 75) {
         rate = 130000;     // Agak jauh
       } else if (distance <= 100) {
-        rate = 145000;     // Jauh (Malang/Surabaya)
+        rate = 145000;     // Jauh
+      } else if (distance <= 150) {
+        rate = 180000;     // Sangat Jauh (Surabaya ke Blitar)
+      } else if (distance <= 250) {
+        rate = 250000;     // Antar kota jauh / perbatasan provinsi (Jawa Tengah ke Blitar)
       } else {
-        // Untuk jarak di atas 100 km, gunakan tarif per km tambahan agar adil
-        // Tarif dasar 145.000 + (jarak - 100 km) * 1.500 per km
-        double extraDistance = distance - 100;
-        rate = 145000 + (extraDistance * 1500).toInt();
+        // Untuk jarak di atas 250 km, gunakan tarif per km tambahan agar adil
+        // Tarif dasar 250.000 + (jarak - 250 km) * 1.500 per km
+        double extraDistance = distance - 250;
+        rate = 250000 + (extraDistance * 1500).toInt();
       }
     } else {
       // Fallback jika salah satu alamat tidak memiliki koordinat (diinput manual tanpa peta picker)
-      String alamat = alamatTujuanController.text.toLowerCase();
+      String asal = alamatAsalController.text.toLowerCase();
+      String tujuan = alamatTujuanController.text.toLowerCase();
       
-      // Perbaikan bug: Cek tulungagung bandung dulu agar tidak salah deteksi sebagai kota Bandung (Jawa Barat)
-      if (alamat.contains('bandung') && (alamat.contains('tulungagung') || alamat.contains('ta'))) {
+      // Tentukan kecocokan wilayah (Asal & Tujuan)
+      bool hasJateng = asal.contains('jawa tengah') || asal.contains('jateng') || asal.contains('solo') || asal.contains('semarang') ||
+                       tujuan.contains('jawa tengah') || tujuan.contains('jateng') || tujuan.contains('solo') || tujuan.contains('semarang');
+                       
+      bool hasSurabaya = asal.contains('surabaya') || tujuan.contains('surabaya');
+      bool hasKediri = asal.contains('kediri') || tujuan.contains('kediri') || asal.contains('pare') || tujuan.contains('pare');
+      bool hasTulungagung = asal.contains('tulungagung') || tujuan.contains('tulungagung');
+      bool hasBlitar = asal.contains('blitar') || tujuan.contains('blitar');
+      bool hasBandungTug = (asal.contains('bandung') && (asal.contains('tulungagung') || asal.contains('ta'))) ||
+                           (tujuan.contains('bandung') && (tujuan.contains('tulungagung') || tujuan.contains('ta')));
+
+      if (hasJateng) {
+        rate = 280000; // Antar provinsi Jawa Tengah
+      } else if (hasSurabaya) {
+        rate = 180000; // Surabaya - Blitar / sekitarnya
+      } else if (hasBandungTug) {
         rate = 118750; // Bandung Tulungagung
-      } else if (alamat.contains('bandung')) {
-        rate = 350000; // Bandung (Jawa Barat - jauh)
-      } else if (alamat.contains('tulungagung') || alamat.contains('kediri') || alamat.contains('pare') || alamat.contains('blitar')) {
-        rate = 110000;
+      } else if (hasKediri || hasTulungagung) {
+        rate = 110000; // Kediri / Tulungagung ke Blitar
+      } else if (hasBlitar) {
+        rate = 85000;  // Sama-sama Blitar (lokal)
+      } else if (tujuan.contains('bandung')) {
+        rate = 350000; // Bandung Jawa Barat
+      } else {
+        rate = 150000; // Default
       }
     }
     return (tonase * rate).toInt();
