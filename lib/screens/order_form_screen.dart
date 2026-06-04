@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../app_theme.dart';
@@ -52,16 +53,70 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
     super.dispose();
   }
 
+  double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+    const p = 0.017453292519943295; // Math.PI / 180
+    final a = 0.5 - cos((lat2 - lat1) * p) / 2 +
+        cos(lat1 * p) * cos(lat2 * p) *
+        (1 - cos((lon2 - lon1) * p)) / 2;
+    return 12742 * asin(sqrt(a)); // 2 * R; R = 6371 km
+  }
+
+  Map<String, double>? _getCoordinates(String? rawAddress) {
+    if (rawAddress == null) return null;
+    final parts = rawAddress.split(' @');
+    if (parts.length < 2) return null;
+    final coords = parts[1].split(',');
+    if (coords.length < 2) return null;
+    final lat = double.tryParse(coords[0]);
+    final lng = double.tryParse(coords[1]);
+    if (lat != null && lng != null) {
+      return {'lat': lat, 'lng': lng};
+    }
+    return null;
+  }
+
   int get calculatedTotalBiaya {
     double tonase = double.tryParse(beratController.text.replaceAll(',', '.')) ?? 0.0;
     if (tonase <= 0 || alamatTujuanController.text.isEmpty) return 0;
     
-    String alamat = alamatTujuanController.text.toLowerCase();
-    int rate = 150000; // Harga default per Ton
-    if (alamat.contains('bandung')) {
-      rate = 125000;
-    } else if (alamat.contains('tulungagung') || alamat.contains('kediri') || alamat.contains('pare') || alamat.contains('blitar')) {
-      rate = 110000;
+    int rate = 150000; // Harga default per Ton jika jarak tidak terdeteksi
+    final origin = _getCoordinates(_alamatAsalRaw);
+    final dest = _getCoordinates(_alamatTujuanRaw);
+
+    if (origin != null && dest != null) {
+      double distance = _calculateDistance(origin['lat']!, origin['lng']!, dest['lat']!, dest['lng']!);
+      
+      // Hitung rate per ton berdasarkan jarak (semakin jauh semakin mahal)
+      if (distance <= 10) {
+        rate = 85000;      // Sangat dekat (dalam kota)
+      } else if (distance <= 20) {
+        rate = 95000;      // Dekat
+      } else if (distance <= 35) {
+        rate = 110000;     // Blitar - Tulungagung Kota / Kediri (sekitar 30 km) -> 110.000 / ton (8 Ton = 880.000)
+      } else if (distance <= 50) {
+        rate = 118750;     // Blitar - Bandung Tulungagung / Trenggalek (sekitar 43 km) -> 118.750 / ton (8 Ton = 950.000)
+      } else if (distance <= 75) {
+        rate = 130000;     // Agak jauh
+      } else if (distance <= 100) {
+        rate = 145000;     // Jauh (Malang/Surabaya)
+      } else {
+        // Untuk jarak di atas 100 km, gunakan tarif per km tambahan agar adil
+        // Tarif dasar 145.000 + (jarak - 100 km) * 1.500 per km
+        double extraDistance = distance - 100;
+        rate = 145000 + (extraDistance * 1500).toInt();
+      }
+    } else {
+      // Fallback jika salah satu alamat tidak memiliki koordinat (diinput manual tanpa peta picker)
+      String alamat = alamatTujuanController.text.toLowerCase();
+      
+      // Perbaikan bug: Cek tulungagung bandung dulu agar tidak salah deteksi sebagai kota Bandung (Jawa Barat)
+      if (alamat.contains('bandung') && (alamat.contains('tulungagung') || alamat.contains('ta'))) {
+        rate = 118750; // Bandung Tulungagung
+      } else if (alamat.contains('bandung')) {
+        rate = 350000; // Bandung (Jawa Barat - jauh)
+      } else if (alamat.contains('tulungagung') || alamat.contains('kediri') || alamat.contains('pare') || alamat.contains('blitar')) {
+        rate = 110000;
+      }
     }
     return (tonase * rate).toInt();
   }
