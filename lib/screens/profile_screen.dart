@@ -49,6 +49,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     
     final nameController = TextEditingController(text: user!['name']);
     final emailController = TextEditingController(text: user!['email']);
+    final noHpController = TextEditingController(text: user!['no_hp']?.toString() ?? '');
+    final alamatController = TextEditingController(text: user!['alamat']?.toString() ?? '');
     File? selectedImage;
 
     showDialog(
@@ -97,6 +99,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     controller: emailController,
                     decoration: const InputDecoration(labelText: 'Email'),
                   ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: noHpController,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(labelText: 'Nomor HP'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: alamatController,
+                    maxLines: 3,
+                    decoration: const InputDecoration(labelText: 'Alamat'),
+                  ),
                 ],
               ),
             ),
@@ -110,6 +124,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   final success = await AuthService.updateProfile(
                     nameController.text.trim(),
                     emailController.text.trim(),
+                    noHp: noHpController.text.trim(),
+                    alamat: alamatController.text.trim(),
                     image: selectedImage,
                   );
 
@@ -233,6 +249,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
 
                     const SizedBox(height: 28),
+
+                    // Detail Kontak Card
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 20),
+                      decoration: BoxDecoration(
+                        color: context.surfaceColor,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: context.borderColor),
+                      ),
+                      child: Column(
+                        children: [
+                          _SettingRow(
+                            icon: Icons.phone_rounded,
+                            label: 'Nomor HP',
+                            trailing: Text(
+                              (user!['no_hp'] != null && user!['no_hp'].toString().isNotEmpty)
+                                  ? user!['no_hp'].toString()
+                                  : 'Belum diatur',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: (user!['no_hp'] != null && user!['no_hp'].toString().isNotEmpty)
+                                    ? context.textSecondaryColor
+                                    : context.textMutedColor,
+                              ),
+                            ),
+                          ),
+                          Divider(
+                              height: 1,
+                              color: context.borderColor,
+                              indent: 56),
+                          _SettingRow(
+                            icon: Icons.location_on_rounded,
+                            label: 'Alamat',
+                            trailing: SizedBox(
+                              width: 180,
+                              child: Text(
+                                (user!['alamat'] != null && user!['alamat'].toString().isNotEmpty)
+                                    ? user!['alamat'].toString()
+                                    : 'Belum diatur',
+                                textAlign: TextAlign.end,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: (user!['alamat'] != null && user!['alamat'].toString().isNotEmpty)
+                                      ? context.textSecondaryColor
+                                      : context.textMutedColor,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
 
                     // Settings Card
                     Container(

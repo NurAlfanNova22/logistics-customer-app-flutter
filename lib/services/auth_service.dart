@@ -106,7 +106,7 @@ class AuthService {
     }
   }
 
-  static Future<bool> updateProfile(String name, String email, {File? image}) async {
+  static Future<bool> updateProfile(String name, String email, {String? noHp, String? alamat, File? image}) async {
     final token = await getToken();
     if (token == null) return false;
 
@@ -120,6 +120,8 @@ class AuthService {
 
       request.fields['name'] = name;
       request.fields['email'] = email;
+      if (noHp != null) request.fields['no_hp'] = noHp;
+      if (alamat != null) request.fields['alamat'] = alamat;
       request.fields['_method'] = 'PUT'; // Method spoofing for Laravel
 
       if (image != null) {
