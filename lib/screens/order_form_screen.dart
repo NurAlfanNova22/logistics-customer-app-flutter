@@ -163,6 +163,46 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
     return 'Rp $result';
   }
 
+  String get estimatedArrivalDescription {
+    if (alamatTujuanController.text.isEmpty) return "-";
+    
+    final origin = _getCoordinates(_alamatAsalRaw);
+    final dest = _getCoordinates(_alamatTujuanRaw);
+
+    if (origin != null && dest != null) {
+      double distance = _calculateDistance(origin['lat']!, origin['lng']!, dest['lat']!, dest['lng']!);
+      if (distance <= 15) {
+        return "Hari yang sama (Estimasi 3-6 Jam)";
+      } else if (distance <= 50) {
+        return "1 Hari (Besok Sampai)";
+      } else if (distance <= 150) {
+        return "1-2 Hari";
+      } else if (distance <= 250) {
+        return "2 Hari";
+      } else {
+        return "2-3 Hari";
+      }
+    } else {
+      String asal = alamatAsalController.text.toLowerCase();
+      String tujuan = alamatTujuanController.text.toLowerCase();
+      
+      bool hasJateng = asal.contains('jawa tengah') || asal.contains('jateng') || asal.contains('solo') || asal.contains('semarang') ||
+                       tujuan.contains('jawa tengah') || tujuan.contains('jateng') || tujuan.contains('solo') || tujuan.contains('semarang');
+      bool hasSurabaya = asal.contains('surabaya') || tujuan.contains('surabaya');
+      bool hasBandung = asal.contains('bandung') || tujuan.contains('bandung');
+
+      if (hasJateng) {
+        return "2 Hari";
+      } else if (hasSurabaya) {
+        return "1-2 Hari";
+      } else if (hasBandung && (tujuan.contains('jawa barat') || asal.contains('jawa barat'))) {
+        return "3-4 Hari";
+      } else {
+        return "1-2 Hari";
+      }
+    }
+  }
+
   Future<void> submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => isLoading = true);
@@ -180,6 +220,7 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
       'tanggal_pemesanan': _tanggalPemesanan != null 
           ? "${_tanggalPemesanan!.year}-${_tanggalPemesanan!.month.toString().padLeft(2, '0')}-${_tanggalPemesanan!.day.toString().padLeft(2, '0')}"
           : null,
+      'estimasi_datang': estimatedArrivalDescription,
     });
 
     setState(() => isLoading = false);
@@ -418,13 +459,31 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppColors.primary.withOpacity(0.2)),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
                   children: [
-                    const Text('Estimasi Total Biaya:', 
-                        style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.primaryDark)),
-                    Text(_formatCurrency(calculatedTotalBiaya), 
-                        style: const TextStyle(color: AppColors.primary, fontSize: 18, fontWeight: FontWeight.w800)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Estimasi Total Biaya:', 
+                            style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.primaryDark)),
+                        Text(_formatCurrency(calculatedTotalBiaya), 
+                            style: const TextStyle(color: AppColors.primary, fontSize: 18, fontWeight: FontWeight.w800)),
+                      ],
+                    ),
+                    if (estimatedArrivalDescription != "-") ...[
+                      const SizedBox(height: 8),
+                      Divider(height: 1, thickness: 0.5, color: AppColors.primary.withOpacity(0.2)),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Estimasi Tiba (Preorder):', 
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.grey[700])),
+                          Text(estimatedArrivalDescription, 
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primaryDark)),
+                        ],
+                      ),
+                    ]
                   ],
                 ),
               ),

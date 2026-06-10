@@ -388,6 +388,13 @@ class _OrderCardState extends State<_OrderCard> {
                     DateFormat('dd MMM yyyy').format(DateTime.parse(p['tanggal_pemesanan'].toString())),
                     context),
               ],
+              if (p['estimasi_datang'] != null && p['estimasi_datang'] != '-') ...[
+                const SizedBox(height: 4),
+                _infoRow(
+                    Icons.timelapse_rounded, 'Estimasi Tiba',
+                    p['estimasi_datang'].toString(),
+                    context),
+              ],
             ],
           ),
         ),
