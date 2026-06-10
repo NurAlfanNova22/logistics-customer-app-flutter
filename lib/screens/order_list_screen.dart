@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import 'order_detail_screen.dart';
 import 'order_status_screen.dart';
@@ -380,6 +381,13 @@ class _OrderCardState extends State<_OrderCard> {
                   Icons.inventory_2_outlined, 'Barang',
                   '${p['jenis_barang'] ?? '-'} • ${p['berat'] ?? 0} kg',
                   context),
+              if (p['tanggal_pemesanan'] != null) ...[
+                const SizedBox(height: 4),
+                _infoRow(
+                    Icons.calendar_today_outlined, 'Tgl Kirim',
+                    DateFormat('dd MMM yyyy').format(DateTime.parse(p['tanggal_pemesanan'].toString())),
+                    context),
+              ],
             ],
           ),
         ),

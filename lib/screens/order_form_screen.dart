@@ -21,10 +21,12 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
   final alamatTujuanController = TextEditingController();
   final jenisBarangController = TextEditingController();
   final beratController = TextEditingController();
+  final tanggalPemesananController = TextEditingController();
 
   bool isLoading = false;
   String? _alamatAsalRaw;
   String? _alamatTujuanRaw;
+  DateTime? _tanggalPemesanan;
 
   @override
   void initState() {
@@ -51,6 +53,7 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
     alamatTujuanController.dispose();
     jenisBarangController.dispose();
     beratController.dispose();
+    tanggalPemesananController.dispose();
     super.dispose();
   }
 
@@ -174,6 +177,9 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
       'jenis_barang': jenisBarangController.text,
       'berat': beratKg,
       'total_biaya': calculatedTotalBiaya,
+      'tanggal_pemesanan': _tanggalPemesanan != null 
+          ? "${_tanggalPemesanan!.year}-${_tanggalPemesanan!.month.toString().padLeft(2, '0')}-${_tanggalPemesanan!.day.toString().padLeft(2, '0')}"
+          : null,
     });
 
     setState(() => isLoading = false);
@@ -319,6 +325,51 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
             ),
             const SizedBox(height: 14),
             _SectionCard(
+              title: 'Jadwal Pengiriman (Preorder)',
+              icon: Icons.calendar_today_outlined,
+              children: [
+                _input(
+                  controller: tanggalPemesananController,
+                  label: 'Tanggal Rencana Kirim',
+                  icon: Icons.calendar_month_rounded,
+                  hint: 'Pilih Tanggal Rencana Kirim',
+                  readOnly: true,
+                  onTap: () async {
+                    final DateTime? picked = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now().add(const Duration(days: 1)),
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                      builder: (context, child) {
+                        return Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: const ColorScheme.light(
+                              primary: AppColors.primary,
+                              onPrimary: Colors.white,
+                              onSurface: AppColors.primaryDark,
+                            ),
+                            textButtonTheme: TextButtonThemeData(
+                              style: TextButton.styleFrom(
+                                foregroundColor: AppColors.primary,
+                              ),
+                            ),
+                          ),
+                          child: child!,
+                        );
+                      },
+                    );
+                    if (picked != null) {
+                      setState(() {
+                        _tanggalPemesanan = picked;
+                        tanggalPemesananController.text = "${picked.day.toString().padLeft(2, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.year}";
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            _SectionCard(
               title: 'Detail Barang',
               icon: Icons.inventory_2_outlined,
               children: [
@@ -417,11 +468,15 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
     String? Function(String?)? validator,
     String? hint,
     bool isAddress = false,
+    bool readOnly = false,
+    VoidCallback? onTap,
   }) {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
+      readOnly: readOnly,
+      onTap: onTap,
       style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
       validator: validator ??
           (v) => v == null || v.isEmpty ? '$label wajib diisi' : null,
