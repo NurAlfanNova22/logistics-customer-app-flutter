@@ -46,7 +46,7 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
       final paymentStatus = (p['status_pembayaran'] ?? 'BELUM DIBAYAR').toString().toUpperCase();
 
       if (type == 'Belum Bayar') {
-        return paymentStatus == 'BELUM DIBAYAR' && status != 'DIBATALKAN';
+        return paymentStatus == 'BELUM DIBAYAR' && status != 'DIBATALKAN' && status != 'DITOLAK';
       } else if (type == 'Sopir Mengambil') {
         return (status == 'MENUNGGU' || status == 'PROSES' || status == 'DIPROSES');
       } else if (type == 'Dikirim') {
@@ -183,7 +183,7 @@ class _OrderCardState extends State<OrderCard> {
   Widget build(BuildContext context) {
     final p = widget.pesanan;
     final mainStatus = (p['status'] ?? '').toString().toUpperCase();
-    final statusText = (mainStatus == 'SELESAI' || mainStatus == 'DIBATALKAN')
+    final statusText = (mainStatus == 'SELESAI' || mainStatus == 'DIBATALKAN' || mainStatus == 'DITOLAK')
         ? mainStatus
         : (p['status_pengiriman'] ?? p['status']);
 
@@ -305,6 +305,11 @@ class _OrderCardState extends State<OrderCard> {
         bgColor = Colors.red.shade50;
         textColor = Colors.red.shade700;
         text = 'DIBATALKAN';
+        break;
+      case 'ditolak':
+        bgColor = Colors.red.shade50;
+        textColor = Colors.red.shade700;
+        text = 'DITOLAK';
         break;
       default:
         bgColor = AppColors.primarySurface;

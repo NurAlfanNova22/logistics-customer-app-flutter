@@ -247,6 +247,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     // Mapping status label Bahasa Indonesia
     String displayStatus = statusPengiriman;
     if (status == 'menunggu konfirmasi') displayStatus = 'menunggu konfirmasi';
+    if (status == 'ditolak') displayStatus = 'ditolak';
     if (statusPengiriman == 'menunggu pickup') displayStatus = 'sopir mengambil barang';
     
     final statusPembayaran = (_currentPesanan['status_pembayaran'] ?? 'BELUM DIBAYAR').toString().toUpperCase();
@@ -258,7 +259,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
     final isCompleted = status == 'selesai';
     final isTrackingAvailable = statusPengiriman == 'dalam perjalanan';
-    final canBeCancelled = status != 'dibatalkan' && status != 'selesai' && statusPengiriman != 'dalam perjalanan' && statusPengiriman != 'pesanan telah dikirim';
+    final canBeCancelled = status != 'dibatalkan' && status != 'ditolak' && status != 'selesai' && statusPengiriman != 'dalam perjalanan' && statusPengiriman != 'pesanan telah dikirim';
 
     final formatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
@@ -286,6 +287,46 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           children: [
+            if (status == 'ditolak')
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.red.withOpacity(0.2)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.cancel_rounded, color: Colors.red, size: 24),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Pesanan Ditolak',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _currentPesanan['alasan_penolakan'] ?? 'Tidak ada alasan penolakan yang spesifik.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.red[900],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             _SectionCard(
               title: 'Informasi Pabrik',
               icon: Icons.factory_outlined,

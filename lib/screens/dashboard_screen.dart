@@ -88,7 +88,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               // Filter pesanan yang aktif (bukan selesai / dibatalkan)
               final activeOrders = orders.where((p) {
                 final status = p['status']?.toString().toUpperCase() ?? '';
-                return status != 'SELESAI' && status != 'DIBATALKAN';
+                return status != 'SELESAI' && status != 'DIBATALKAN' && status != 'DITOLAK';
               }).toList();
 
               if (activeOrders.isEmpty) {

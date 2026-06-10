@@ -50,7 +50,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
       final statusPengiriman = p['status_pengiriman']?.toString().toUpperCase();
       final paymentStatus = (p['status_pembayaran'] ?? 'BELUM DIBAYAR').toString().toUpperCase();
 
-      if (paymentStatus == 'BELUM DIBAYAR' && status != 'DIBATALKAN') {
+      if (paymentStatus == 'BELUM DIBAYAR' && status != 'DIBATALKAN' && status != 'DITOLAK') {
         belumBayar++;
       }
 
@@ -312,7 +312,7 @@ class _OrderCardState extends State<_OrderCard> {
   Widget build(BuildContext context) {
     final p = widget.pesanan;
     final mainStatus = (p['status'] ?? '').toString().toUpperCase();
-    final statusText = (mainStatus == 'SELESAI' || mainStatus == 'DIBATALKAN')
+    final statusText = (mainStatus == 'SELESAI' || mainStatus == 'DIBATALKAN' || mainStatus == 'DITOLAK')
         ? mainStatus
         : (p['status_pengiriman'] ?? p['status']);
 
@@ -453,6 +453,11 @@ class _OrderCardState extends State<_OrderCard> {
         bgColor = context.isDark ? Colors.red.withOpacity(0.15) : Colors.red.shade50;
         textColor = context.isDark ? Colors.red.shade300 : Colors.red.shade700;
         text = 'DIBATALKAN';
+        break;
+      case 'ditolak':
+        bgColor = context.isDark ? Colors.red.withOpacity(0.15) : Colors.red.shade50;
+        textColor = context.isDark ? Colors.red.shade300 : Colors.red.shade700;
+        text = 'DITOLAK';
         break;
       default:
         bgColor = AppColors.primarySurface;
