@@ -333,14 +333,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               children: [
                 _infoRow('Resi', _currentPesanan['resi'], context, highlight: true),
                 _infoRow('Nama Pabrik', _currentPesanan['nama_pabrik'], context),
-                _infoRow('Alamat Asal', _currentPesanan['alamat_asal'], context),
-                _infoRow('Alamat Tujuan', _currentPesanan['alamat_tujuan'], context),
+                _infoRow('Alamat Asal', _currentPesanan['alamat_asal_clean'] ?? _currentPesanan['alamat_asal']?.toString().split(' @').first ?? '-', context),
+                _infoRow('Alamat Tujuan', _currentPesanan['alamat_tujuan_clean'] ?? _currentPesanan['alamat_tujuan']?.toString().split(' @').first ?? '-', context),
                 _infoRow('Status', displayStatus.toUpperCase(), context, highlight: true),
                 _infoRow('Tanggal Pesan', DateFormat('dd MMM yyyy, HH:mm').format(DateTime.parse(_currentPesanan['created_at'].toString())), context),
                 if (_currentPesanan['tanggal_pemesanan'] != null)
                   _infoRow('Tgl Rencana Kirim', DateFormat('dd MMM yyyy').format(DateTime.parse(_currentPesanan['tanggal_pemesanan'].toString())), context),
                 if (_currentPesanan['estimasi_datang'] != null && _currentPesanan['estimasi_datang'] != '-')
-                  _infoRow('Estimasi Tiba (Preorder)', _currentPesanan['estimasi_datang'].toString(), context),
+                  _infoRow('Estimasi Barang Datang', _currentPesanan['estimasi_datang'].toString(), context),
                 if (_currentPesanan['tanggal_dikirim'] != null)
                   _infoRow('Tanggal Dikirim', DateFormat('dd MMM yyyy, HH:mm').format(DateTime.parse(_currentPesanan['tanggal_dikirim'].toString())), context),
                 if (_currentPesanan['tanggal_selesai'] != null)
